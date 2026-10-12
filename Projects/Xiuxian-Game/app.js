@@ -532,6 +532,8 @@
     if (!window.confirm("将应用行动结果并推进 " + result.timeCostMinutes +
         " 分钟。请确认资源变化无误，继续吗？")) return;
 
+    const previousState = state;
+    state = clone(state);
     if (patch.character) Object.assign(state.character, clone(patch.character));
     if (patch.world) Object.assign(state.world, clone(patch.world));
     advanceClock(result.timeCostMinutes);
@@ -550,8 +552,13 @@
       statePatch: clone(patch)
     });
     const saved = saveState(false);
+    if (!saved) {
+      state = previousState;
+      renderState();
+      return;
+    }
     renderState();
-    if (saved) setMessage("本次状态变化已应用并保存。", false);
+    setMessage("本次状态变化已应用并保存。", false);
     pendingResult = null;
     pendingAction = null;
     el("apply-response").disabled = true;
