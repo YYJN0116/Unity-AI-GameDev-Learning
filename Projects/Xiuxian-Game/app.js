@@ -9,6 +9,165 @@
     ["trade", "商贸 / 交易"], ["social", "结交 / 交谈"],
     ["combat", "试炼 / 战斗"], ["breakthrough", "突破"], ["rest", "休息 / 闭关"]
   ];
+  const WORLD_DATABASE = {
+  "schemaVersion": "0.1",
+  "catalogStatus": "candidate_catalog",
+  "description": "条目源自 game-design.md 的建议清单，都是候选，不自动成为本局正史。",
+  "selectionPolicy": {
+    "randomEligibleStatuses": [
+      "candidate",
+      "active"
+    ],
+    "candidateRequiresPlayerConfirmation": true,
+    "doNotSelectDeprecated": true,
+    "selectOnlyWithinRequestedType": true
+  },
+  "continents": [
+    {
+      "id": "chenxi",
+      "name": "晨曦大陆",
+      "description": "修仙世界的主要舞台"
+    }
+  ],
+  "regions": [
+    {
+      "id": "xuanhai-wasteland",
+      "name": "玄海荒地",
+      "type": "wilderness_region",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "notes": "原文将其列入主要势力建议，但名称更像区域；正式定位待确认。"
+    },
+    {
+      "id": "old-dynasty-remains",
+      "name": "旧朝残迹",
+      "type": "historical_region_or_ruins",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "notes": "原文将其列入主要势力建议；具体是区域、遗迹还是势力待确认。"
+    }
+  ],
+  "locations": [
+    {
+      "id": "back-mountain-cave",
+      "name": "后山洞府",
+      "type": "cultivation_site",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": "建议作为修炼地点；安全程度和可用条件须按本局设定。"
+    },
+    {
+      "id": "mountain-gate",
+      "name": "山门",
+      "type": "sect_site",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": "可用于宗门事务、结识门人和获取消息。"
+    },
+    {
+      "id": "market",
+      "name": "坊市",
+      "type": "market",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": "可用于交易、购买资源和获取外部消息；具体价格待本局校准。"
+    },
+    {
+      "id": "cold-spring-valley",
+      "name": "冷泉谷",
+      "type": "valley",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": null
+    },
+    {
+      "id": "forest-secret-realm",
+      "name": "密林秘境",
+      "type": "secret_realm",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": "可用于探索；危险、收益、入口和路程须按本局设定。"
+    },
+    {
+      "id": "forbidden-frontier",
+      "name": "禁地前沿",
+      "type": "frontier",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": "候选事件地点；具体秘密、风险和用途待本局设定。"
+    }
+  ],
+  "factions": [
+    {
+      "id": "xuanfeng-sect",
+      "name": "玄风宗",
+      "type": "sect",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "values": null,
+      "influence": null,
+      "resources": null,
+      "keyCharacters": []
+    },
+    {
+      "id": "lieyan-valley",
+      "name": "烈焰谷",
+      "type": "sect",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "values": null,
+      "influence": null,
+      "resources": null,
+      "keyCharacters": []
+    },
+    {
+      "id": "yueyin-gate",
+      "name": "月隐门",
+      "type": "sect",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "values": null,
+      "influence": null,
+      "resources": null,
+      "keyCharacters": []
+    },
+    {
+      "id": "mortal-trade-association",
+      "name": "人间商会",
+      "type": "merchant_association",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "values": null,
+      "influence": null,
+      "resources": null,
+      "keyCharacters": []
+    }
+  ]
+};
   const CHARACTER_PATCH_FIELDS = new Set([
     "name", "age", "background", "identity", "spiritualRoot", "constitution",
     "realm", "cultivationProgress", "spiritualPower", "fatigue", "injuries",
@@ -16,6 +175,7 @@
     "goals", "activeTasks"
   ]);
   const WORLD_PATCH_FIELDS = new Set(["currentLocationId", "events"]);
+  const GAME_WORLD_PATCH_FIELDS = new Set(["continent", "location", "faction"]);
   const el = (id) => document.getElementById(id);
   const requiredIds = ["character-card", "action-buttons", "story-log", "ai-prompt",
     "copy-prompt", "save-button", "load-button", "reset-button", "current-date", "status-title"];
@@ -41,6 +201,7 @@
       injuries: [], inventory: [], currencyBalances: [], relationships: [],
       reputation: null, debts: [], goals: [], activeTasks: []
     },
+    gameWorld: { continent: "", location: "", faction: "" },
     world: { currentLocationId: "", events: [] },
     ledger: []
   });
@@ -48,6 +209,7 @@
   let state = makeInitialState();
   let pendingAction = null;
   let pendingResult = null;
+  let pendingWorldSetup = null;
 
   function setMessage(message, isError) {
     let node = el("app-message");
@@ -114,7 +276,9 @@
       ["境界", formatRealm(character.realm)], ["修为进度", progress],
       ["灵力", power], ["疲劳", fatigue], ["伤势", injuries],
       ["货币", currency], ["物品", inventory], ["关系", relationships],
-      ["名声", character.reputation], ["当前地点", state.world.currentLocationId],
+      ["名声", character.reputation],
+      ["大陆", state.gameWorld.continent], ["地点", state.gameWorld.location],
+      ["势力", state.gameWorld.faction], ["当前地点 ID", state.world.currentLocationId],
       ["目标", (character.goals || []).join("；")],
       ["进行中事项", (character.activeTasks || []).join("；")]
     ];
@@ -196,6 +360,105 @@
     }
   }
 
+  function getRandomEligible(items) {
+    const allowedStatuses = WORLD_DATABASE.selectionPolicy.randomEligibleStatuses;
+    const eligible = items.filter((item) =>
+      item.randomEligible === true && allowedStatuses.includes(item.status) &&
+      item.status !== "deprecated"
+    );
+    if (!eligible.length) throw new Error("世界库中没有可随机抽取的合格条目。");
+    return eligible[Math.floor(Math.random() * eligible.length)];
+  }
+
+  function makeWorldSetupProposal() {
+    if (!Array.isArray(WORLD_DATABASE.continents) || !WORLD_DATABASE.continents.length) {
+      throw new Error("世界库尚无大陆条目。");
+    }
+    return {
+      continent: WORLD_DATABASE.continents[0],
+      location: getRandomEligible(WORLD_DATABASE.locations || []),
+      faction: getRandomEligible(WORLD_DATABASE.factions || [])
+    };
+  }
+
+  function renderWorldSetupProposal() {
+    const proposal = el("world-setup-proposal");
+    const summary = el("world-setup-summary");
+    if (!proposal || !summary) return;
+    proposal.hidden = !pendingWorldSetup;
+    if (!pendingWorldSetup) return;
+    summary.textContent = "大陆：" + pendingWorldSetup.continent.name +
+      "；地点：" + pendingWorldSetup.location.name +
+      "；势力：" + pendingWorldSetup.faction.name +
+      (WORLD_DATABASE.selectionPolicy.candidateRequiresPlayerConfirmation
+        ? "（候选设定，等待玩家确认）" : "");
+  }
+
+  function addNewGameControls() {
+    const panel = document.querySelector(".save-panel");
+    if (!panel || el("new-game-button")) return;
+    const group = document.createElement("section");
+    group.className = "new-game-controls";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.id = "new-game-button";
+    button.textContent = "新游戏：随机世界";
+    button.addEventListener("click", () => {
+      try {
+        pendingWorldSetup = makeWorldSetupProposal();
+        renderWorldSetupProposal();
+        setMessage("已抽取世界候选；确认前不会覆盖当前存档。", false);
+      } catch (error) {
+        setMessage("无法生成新游戏：" + error.message, true);
+      }
+    });
+    const proposal = document.createElement("div");
+    proposal.id = "world-setup-proposal";
+    proposal.hidden = true;
+    const summary = document.createElement("p");
+    summary.id = "world-setup-summary";
+    const rerollButton = document.createElement("button");
+    rerollButton.type = "button";
+    rerollButton.textContent = "重新抽取";
+    rerollButton.addEventListener("click", () => {
+      try {
+        pendingWorldSetup = makeWorldSetupProposal();
+        renderWorldSetupProposal();
+      } catch (error) {
+        setMessage("无法重新抽取：" + error.message, true);
+      }
+    });
+    const confirmButton = document.createElement("button");
+    confirmButton.type = "button";
+    confirmButton.textContent = "确认并开始新游戏";
+    confirmButton.addEventListener("click", () => {
+      if (!pendingWorldSetup) return;
+      if (!window.confirm("开始新游戏会替换当前浏览器中的本局存档并重置角色。确认继续吗？")) return;
+      const previousState = state;
+      const nextState = makeInitialState();
+      nextState.gameWorld = {
+        continent: pendingWorldSetup.continent.name,
+        location: pendingWorldSetup.location.name,
+        faction: pendingWorldSetup.faction.name
+      };
+      nextState.world.currentLocationId = pendingWorldSetup.location.id;
+      state = nextState;
+      if (!saveState(false)) {
+        state = previousState;
+        return;
+      }
+      pendingWorldSetup = null;
+      pendingAction = null;
+      pendingResult = null;
+      renderState();
+      renderWorldSetupProposal();
+      setMessage("新游戏已开始，世界设定已写入存档。", false);
+    });
+    proposal.append(summary, rerollButton, confirmButton);
+    group.append(button, proposal);
+    panel.querySelector("h2").insertAdjacentElement("afterend", group);
+  }
+
   function addDateControls() {
     const panel = document.querySelector(".save-panel");
     if (!panel || el("session-date")) return;
@@ -271,6 +534,7 @@
     importButton.addEventListener("click", () => {
       try {
         const imported = JSON.parse(textarea.value);
+        normalizeState(imported);
         validateState(imported);
         if (!window.confirm("导入内容将替换当前状态，继续吗？")) return;
         state = imported;
@@ -377,7 +641,7 @@
       "输出必须是单一 JSON 对象，结构如下，字段全部必填：",
       '{"schemaVersion":"0.1","result":{"narration":"","observations":[],"actionOutcome":"success","decisionBasis":"","timeCostMinutes":0,"resourceChanges":[],"relationshipEventChanges":[],"nextActions":[],"storyHook":null},"statePatch":{}}',
       "actionOutcome 只能为 success/partial/failure/pending；resourceChanges 每项须含 label、before、change、after、reason。",
-      "statePatch 仅能包含 character 或 world；character 只可改标准字段，world 只可改 currentLocationId/events。列表字段给出完整新列表。",
+      "statePatch 仅能包含 character、world 或 gameWorld；character 只可改标准字段，world 只可改 currentLocationId/events，gameWorld 只可改 continent/location/faction。列表字段给出完整新列表。",
       "pending 时 timeCostMinutes 必须为 0 且 statePatch 必须为 {}。不要修改 updatedAt、sessionId、ledger。",
       "",
       "行动类型：" + pendingAction.label,
@@ -416,12 +680,32 @@
     }
   }
 
+  function normalizeState(candidate) {
+    if (!candidate || typeof candidate !== "object") return;
+    if (!candidate.gameWorld || typeof candidate.gameWorld !== "object") {
+      candidate.gameWorld = { continent: "", location: "", faction: "" };
+    } else {
+      candidate.gameWorld.continent = typeof candidate.gameWorld.continent === "string" ? candidate.gameWorld.continent : "";
+      candidate.gameWorld.location = typeof candidate.gameWorld.location === "string" ? candidate.gameWorld.location : "";
+      candidate.gameWorld.faction = typeof candidate.gameWorld.faction === "string" ? candidate.gameWorld.faction : "";
+    }
+    if (!candidate.gameWorld.location && candidate.world && candidate.world.currentLocationId) {
+      const match = (WORLD_DATABASE.locations || []).find((item) => item.id === candidate.world.currentLocationId);
+      if (match) candidate.gameWorld.location = match.name;
+    }
+  }
+
   function validateState(candidate) {
     if (!candidate || candidate.schemaVersion !== "0.1" ||
-        !candidate.character || !candidate.world || !candidate.updatedAt ||
+        !candidate.character || !candidate.world || !candidate.gameWorld || !candidate.updatedAt ||
         !Array.isArray(candidate.ledger)) {
       throw new Error("不是完整的 v0.1 存档。");
     }
+    ["continent", "location", "faction"].forEach((key) => {
+      if (typeof candidate.gameWorld[key] !== "string") {
+        throw new Error("gameWorld." + key + " 必须为字符串。");
+      }
+    });
     validateRealm(candidate.character.realm);
     ["inventory", "currencyBalances", "relationships", "injuries", "debts", "goals", "activeTasks"]
       .forEach((key) => {
@@ -440,10 +724,11 @@
   function validatePatch(patch) {
     if (!patch || typeof patch !== "object" || Array.isArray(patch)) throw new Error("statePatch 必须是对象。");
     Object.keys(patch).forEach((section) => {
-      if (section !== "character" && section !== "world") throw new Error("statePatch 只能包含 character/world。");
+      if (section !== "character" && section !== "world" && section !== "gameWorld") throw new Error("statePatch 只能包含 character/world/gameWorld。");
       const values = patch[section];
       if (!values || typeof values !== "object" || Array.isArray(values)) throw new Error(section + " patch 无效。");
-      const allowed = section === "character" ? CHARACTER_PATCH_FIELDS : WORLD_PATCH_FIELDS;
+      const allowed = section === "character" ? CHARACTER_PATCH_FIELDS
+        : section === "gameWorld" ? GAME_WORLD_PATCH_FIELDS : WORLD_PATCH_FIELDS;
       Object.keys(values).forEach((key) => {
         if (!allowed.has(key)) throw new Error("不允许更新字段：" + section + "." + key);
       });
@@ -454,6 +739,11 @@
             throw new Error(section + "." + key + " 必须为数组。");
           }
         });
+      if (section === "gameWorld") {
+        Object.keys(values).forEach((key) => {
+          if (typeof values[key] !== "string") throw new Error("gameWorld." + key + " 必须为字符串。");
+        });
+      }
       if (section === "world" && values.events !== undefined && !Array.isArray(values.events)) {
         throw new Error("world.events 必须为数组。");
       }
@@ -536,6 +826,7 @@
     state = clone(state);
     if (patch.character) Object.assign(state.character, clone(patch.character));
     if (patch.world) Object.assign(state.world, clone(patch.world));
+    if (patch.gameWorld) Object.assign(state.gameWorld, clone(patch.gameWorld));
     advanceClock(result.timeCostMinutes);
     state.ledger.push({
       at: clone(state.updatedAt),
@@ -585,6 +876,7 @@
         return false;
       }
       const candidate = JSON.parse(saved);
+      normalizeState(candidate);
       validateState(candidate);
       state = candidate;
       renderState();
@@ -600,6 +892,8 @@
     if (!window.confirm("重置会删除此浏览器中的本局存档，继续吗？")) return;
     localStorage.removeItem(STORAGE_KEY);
     state = makeInitialState();
+    pendingWorldSetup = null;
+    renderWorldSetupProposal();
     pendingAction = null;
     pendingResult = null;
     el("ai-prompt").value = "";
@@ -627,6 +921,7 @@
     }
   }
 
+  addNewGameControls();
   addDateControls();
   addImportExportControls();
   addAIResponseControls();
