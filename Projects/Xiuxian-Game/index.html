@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>修仙世界记录簿</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="panel title-panel">
+          <h1>修仙世界记录簿</h1>
+          <p>玩家角色状态与行动日志</p>
+        </div>
+
+        <div class="panel stats-panel">
+          <h2>角色状态</h2>
+          <div id="character-card"></div>
+        </div>
+
+        <div class="panel actions-panel">
+          <h2>行动选项</h2>
+          <div id="action-buttons"></div>
+        </div>
+
+        <div class="panel save-panel">
+          <h2>存档</h2>
+          <button id="save-button">保存进度</button>
+          <button id="load-button">加载存档</button>
+          <button id="reset-button">重置角色</button>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <div class="panel top-bar">
+          <div>
+            <div class="label">当前状态</div>
+            <h2 id="status-title">正在闭关</h2>
+          </div>
+          <div class="chip" id="current-date">-</div>
+        </div>
+
+        <div class="panel story-panel">
+          <h2>事件回顾</h2>
+          <div id="story-log" class="story-log"></div>
+        </div>
+
+        <div class="panel ai-panel">
+          <h2>AI 主持助手</h2>
+          <p class="small-text">
+            复制以下提示词到 ChatGPT / Claude / Gemini，生成更有深度的故事推进。
+          </p>
+          <textarea id="ai-prompt" readonly></textarea>
+          <button id="copy-prompt">复制主持提示词</button>
+        </div>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
