@@ -29,7 +29,7 @@
   const clone = (value) => JSON.parse(JSON.stringify(value));
   const makeInitialState = () => ({
     schemaVersion: "0.1",
-    sessionId: "new-session",
+    sessionId: "session-" + Date.now().toString(36),
     updatedAt: { inGameDate: null, timeOfDayMinutes: null },
     character: {
       id: "", name: "", age: null, background: "", identity: "",
@@ -335,6 +335,10 @@
 
   function selectAction(id, label) {
     pendingAction = { id, label, text: "" };
+    pendingResult = null;
+    el("apply-response").disabled = true;
+    el("ai-response").value = "";
+    el("ai-preview").textContent = "";
     el("selected-action").textContent = "当前行动：" + label;
     el("player-choice").focus();
     setMessage("写下角色具体要做什么，再生成主持提示词。", false);
@@ -357,6 +361,11 @@
       "不要改变未受行动影响的字段；不确定的数值保持原值或 null。",
       "timeCostMinutes 必须为非负整数。浏览器会据此推进日期；不要在 statePatch 中修改 updatedAt、sessionId 或 ledger。",
       "若规则、日期或数据不足以结算，请在叙事中说明并将结果标为 pending，不要猜测。",
+      "输出必须是单一 JSON 对象，结构如下，字段全部必填：",
+      '{"schemaVersion":"0.1","result":{"narration":"","observations":[],"actionOutcome":"success","decisionBasis":"","timeCostMinutes":0,"resourceChanges":[],"relationshipEventChanges":[],"nextActions":[],"storyHook":null},"statePatch":{}}',
+      "actionOutcome 只能为 success/partial/failure/pending；resourceChanges 每项须含 label、before、change、after、reason。",
+      "statePatch 仅能包含 character 或 world；character 只可改标准字段，world 只可改 currentLocationId/events。列表字段给出完整新列表。",
+      "pending 时 timeCostMinutes 必须为 0 且 statePatch 必须为 {}。不要修改 updatedAt、sessionId、ledger。",
       "",
       "行动类型：" + pendingAction.label,
       "玩家选择：" + choice,
@@ -457,6 +466,10 @@
         throw new Error("result 字段或类型不符合 ai-prompt-template.md。");
       }
       validatePatch(parsed.statePatch);
+      if (result.actionOutcome === "pending" &&
+          (result.timeCostMinutes !== 0 || Object.keys(parsed.statePatch).length !== 0)) {
+        throw new Error("pending 结果不得推进时间或修改状态。");
+      }
       if (result.timeCostMinutes > 0 &&
           (!state.updatedAt.inGameDate || !Number.isInteger(state.updatedAt.timeOfDayMinutes))) {
         throw new Error("请先设定游戏日期和当日分钟数，再应用耗时大于 0 的行动。");
@@ -516,9 +529,9 @@
       decisionBasis: result.decisionBasis,
       statePatch: clone(patch)
     });
-    saveState(false);
+    const saved = saveState(false);
     renderState();
-    setMessage("本次状态变化已应用并保存。", false);
+    if (saved) setMessage("本次状态变化已应用并保存。", false);
     pendingResult = null;
     pendingAction = null;
     el("apply-response").disabled = true;
