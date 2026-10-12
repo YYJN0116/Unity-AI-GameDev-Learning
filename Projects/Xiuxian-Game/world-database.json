@@ -8,7 +8,13 @@
     "doNotSelectDeprecated": true,
     "selectOnlyWithinRequestedType": true
   },
-  "continents": [],
+ "continents": [
+  {
+    "id": "chenxi",
+    "name": "晨曦大陆",
+    "description": "修仙世界的主要舞台"
+  }
+]
   "regions": [
     {
       "id": "xuanhai-wasteland",
