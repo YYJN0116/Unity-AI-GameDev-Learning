@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "0.1",
+  "catalogStatus": "candidate_catalog",
+  "description": "条目源自 game-design.md 的建议清单，都是候选，不自动成为本局正史。",
+  "selectionPolicy": {
+    "randomEligibleStatuses": ["candidate", "active"],
+    "candidateRequiresPlayerConfirmation": true,
+    "doNotSelectDeprecated": true,
+    "selectOnlyWithinRequestedType": true
+  },
+  "continents": [],
+  "regions": [
+    {
+      "id": "xuanhai-wasteland",
+      "name": "玄海荒地",
+      "type": "wilderness_region",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "notes": "原文将其列入主要势力建议，但名称更像区域；正式定位待确认。"
+    },
+    {
+      "id": "old-dynasty-remains",
+      "name": "旧朝残迹",
+      "type": "historical_region_or_ruins",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "notes": "原文将其列入主要势力建议；具体是区域、遗迹还是势力待确认。"
+    }
+  ],
+  "locations": [
+    {
+      "id": "back-mountain-cave",
+      "name": "后山洞府",
+      "type": "cultivation_site",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": "建议作为修炼地点；安全程度和可用条件须按本局设定。"
+    },
+    {
+      "id": "mountain-gate",
+      "name": "山门",
+      "type": "sect_site",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": "可用于宗门事务、结识门人和获取消息。"
+    },
+    {
+      "id": "market",
+      "name": "坊市",
+      "type": "market",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": "可用于交易、购买资源和获取外部消息；具体价格待本局校准。"
+    },
+    {
+      "id": "cold-spring-valley",
+      "name": "冷泉谷",
+      "type": "valley",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": null
+    },
+    {
+      "id": "forest-secret-realm",
+      "name": "密林秘境",
+      "type": "secret_realm",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": "可用于探索；危险、收益、入口和路程须按本局设定。"
+    },
+    {
+      "id": "forbidden-frontier",
+      "name": "禁地前沿",
+      "type": "frontier",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §7",
+      "candidateDescription": "候选事件地点；具体秘密、风险和用途待本局设定。"
+    }
+  ],
+  "factions": [
+    {
+      "id": "xuanfeng-sect",
+      "name": "玄风宗",
+      "type": "sect",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "values": null,
+      "influence": null,
+      "resources": null,
+      "keyCharacters": []
+    },
+    {
+      "id": "lieyan-valley",
+      "name": "烈焰谷",
+      "type": "sect",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "values": null,
+      "influence": null,
+      "resources": null,
+      "keyCharacters": []
+    },
+    {
+      "id": "yueyin-gate",
+      "name": "月隐门",
+      "type": "sect",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "values": null,
+      "influence": null,
+      "resources": null,
+      "keyCharacters": []
+    },
+    {
+      "id": "mortal-trade-association",
+      "name": "人间商会",
+      "type": "merchant_association",
+      "status": "candidate",
+      "randomEligible": true,
+      "requiresPlayerConfirmation": true,
+      "source": "game-design.md §4.2",
+      "values": null,
+      "influence": null,
+      "resources": null,
+      "keyCharacters": []
+    }
+  ]
+}
