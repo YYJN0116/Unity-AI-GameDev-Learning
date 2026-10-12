@@ -161,6 +161,19 @@
       const body = document.createElement("div");
       body.textContent = entry.narration || entry.note || "";
       article.append(heading, body);
+      const addDetail = (label, value) => {
+        if (value === null || value === undefined || value === "") return;
+        const detail = document.createElement("div");
+        detail.textContent = label + "：" + (Array.isArray(value)
+          ? value.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join("；")
+          : String(value));
+        article.appendChild(detail);
+      };
+      addDetail("观察", entry.observations);
+      addDetail("判定依据", entry.decisionBasis);
+      addDetail("关系 / 事件", entry.relationshipEventChanges);
+      addDetail("可选行动", entry.nextActions);
+      addDetail("剧情钩子", entry.storyHook);
       if (entry.actionOutcome) {
         const outcome = document.createElement("div");
         outcome.textContent = "结果：" + entry.actionOutcome;
@@ -462,6 +475,13 @@
           !Array.isArray(result.resourceChanges) ||
           !Array.isArray(result.relationshipEventChanges) ||
           !Array.isArray(result.nextActions) ||
+          !result.observations.every((item) => typeof item === "string") ||
+          !result.relationshipEventChanges.every((item) => typeof item === "string") ||
+          !result.nextActions.every((item) => typeof item === "string") ||
+          !result.resourceChanges.every((item) => item && typeof item === "object" &&
+            typeof item.label === "string" && Object.prototype.hasOwnProperty.call(item, "before") &&
+            Object.prototype.hasOwnProperty.call(item, "change") && Object.prototype.hasOwnProperty.call(item, "after") &&
+            typeof item.reason === "string") ||
           !(typeof result.storyHook === "string" || result.storyHook === null)) {
         throw new Error("result 字段或类型不符合 ai-prompt-template.md。");
       }
