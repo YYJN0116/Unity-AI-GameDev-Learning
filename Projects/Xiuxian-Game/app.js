@@ -849,11 +849,15 @@
       return;
     }
     renderState();
-    setMessage("本次状态变化已应用并保存。", false);
+    const actionStillPending = result.actionOutcome === "pending";
+    setMessage(actionStillPending
+      ? "本次结果仍待结算；当前行动已保留，可以继续补充资料并粘贴后续 JSON。"
+      : "本次状态变化已应用并保存。", false);
     pendingResult = null;
-    pendingAction = null;
+    if (!actionStillPending) pendingAction = null;
     el("apply-response").disabled = true;
     el("ai-response").value = "";
+    if (el("ai-preview")) el("ai-preview").textContent = "";
   }
 
   function saveState(showFeedback) {
