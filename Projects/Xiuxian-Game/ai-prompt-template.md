@@ -61,7 +61,7 @@
 - `character`：可修改 `name`、`age`、`background`、`identity`、`spiritualRoot`、`constitution`、`realm`、`cultivationProgress`、`spiritualPower`、`fatigue`、`injuries`、`inventory`、`currencyBalances`、`relationships`、`reputation`、`debts`、`goals`、`activeTasks`。
 - `world`：可修改 `currentLocationId`、`events`。
 - 列表字段是完整替换值，不是增删指令。输出新完整列表，避免网页无法判断如何合并。
-- 境界必须遵守 `v0.1-data-standard.md`：感气；炼气 level 1–9；筑基及以上 level 为 `null)，阶段只能是初期/中期/后期/圆满或 `null`。
+- 境界必须遵守 `v0.1-data-standard.md`：感气；炼气 level 1–9；筑基及以上 level 为 `null`，阶段只能是初期/中期/后期/圆满或 `null`。
 - 灵力、修为进度、疲劳和伤势若使用数值，必须沿用存档中已确认的单位/量表；不能自行设定。
 - `resourceChanges` 与 `statePatch` 必须一致。若不能复算余额、数量或状态，改为 `pending`。
 - 网页会校验 JSON 结构并展示差异预览；玩家确认后才应用。AI 不得声称变化已保存，保存由网页完成。
