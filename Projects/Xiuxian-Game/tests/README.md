@@ -4,7 +4,7 @@
 
 1. Install Node.js 18 or later and Python.
 2. Open a terminal in `Projects/Xiuxian-Game`.
-3. Install dependencies with `npm install`.
+3. Install the locked dependencies with `npm ci`.
 4. Install the Playwright Chromium browser with `npx playwright install chromium`.
 
 ## Run
