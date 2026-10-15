@@ -16,6 +16,6 @@ module.exports = defineConfig({
     url: 'http://127.0.0.1:8000/',
     reuseExistingServer: true,
     timeout: 30000,
-    cwd: __dirname
+    cwd: require('path').join(__dirname, '可运行测试第一版')
   }
 });
