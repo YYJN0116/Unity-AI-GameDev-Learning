@@ -12,10 +12,10 @@ module.exports = defineConfig({
     video: 'retain-on-failure'
   },
   webServer: {
-    command: 'python -m http.server 8000',
+    command: 'node server.js',
     url: 'http://127.0.0.1:8000/',
     reuseExistingServer: true,
-    timeout: 120000,
+    timeout: 30000,
     cwd: __dirname
   }
 });
