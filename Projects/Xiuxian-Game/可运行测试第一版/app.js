@@ -27,7 +27,7 @@
   }
   const CHARACTER_PATCH_FIELDS = new Set([
     "name", "age", "background", "identity", "spiritualRoot", "constitution",
-    "realm", "cultivationProgress", "progressInternal", "realmStability", "progressBand",
+    "realm", "progressInternal", "realmStability", "progressBand",
     "cultivationScale", "spiritualPowerCap", "spiritualPowerControl", "soulLoad",
     "techniqueMastery", "understanding",
     "spiritualPower", "fatigue", "injuries",
@@ -64,7 +64,6 @@
         id: "", name: "", age: null, background: "", identity: "",
         spiritualRoot: "", constitution: "",
         realm: { name: "", level: null, stage: null },
-        cultivationProgress: null,
         progressInternal: null,
         realmStability: "accumulating",
         progressBand: "initial",
@@ -135,7 +134,7 @@
     }
 
     const maxProgress = (TUNING.cultivation && TUNING.cultivation.max) || 100;
-    const curr = Number(char.cultivationProgress !== null && char.cultivationProgress !== undefined ? char.cultivationProgress : (char.progressInternal || 0));
+    const curr = Number(char.progressInternal || 0);
     const ratio = maxProgress > 0 ? (curr / maxProgress) : 0;
     if (ratio >= 1) return "条件齐备（圆满）";
     if (ratio >= 0.8) return "积累中（接近）";
@@ -160,8 +159,6 @@
     }).join("、") || "0 枚";
     const inventory = character.inventory || [];
     const relationships = character.relationships || [];
-    const maxCultivation = (TUNING.cultivation && TUNING.cultivation.max) || 100;
-    const progressNum = character.cultivationProgress === null ? 0 : Number(character.cultivationProgress) || 0;
     const cultivationStatus = formatCultivationStatus(character);
     const powerVal = character.spiritualPower && character.spiritualPower.value !== null ? character.spiritualPower.value : 0;
     const fatigueVal = character.fatigue && character.fatigue.value !== null ? character.fatigue.value : 0;
@@ -187,7 +184,7 @@
     mainInfo.append(nameEl, identEl);
     headerCard.append(avatar, mainInfo);
 
-    // 2. 境界与修仙进度（按设定集 26 与 10 定稿 Q-A：面向玩家展示状态文字，不出现百分比与虚假精确数值）
+    // 2. 境界与修仙进度（按设定集 26 与 10 定稿 Q-A & 12 验收复核：离散 3 段指示，坚决反对经验值刷条）
     const realmBox = document.createElement("div");
     realmBox.className = "char-realm-box";
     const realmRow = document.createElement("div");
@@ -199,12 +196,26 @@
     rStatus.className = "realm-status-badge";
     rStatus.textContent = cultivationStatus;
     realmRow.append(rName, rStatus);
+
     const track = document.createElement("div");
     track.className = "progress-track";
-    const fill = document.createElement("div");
-    fill.className = "progress-fill";
-    fill.style.width = Math.min(100, Math.max(0, (progressNum / maxCultivation) * 100)) + "%";
-    track.appendChild(fill);
+    let activeSegments = 0;
+    const isReady = character.realmStability === "ready";
+    if (isReady) {
+      activeSegments = 3;
+      track.classList.add("ready");
+    } else if (character.realmStability === "accumulating") {
+      if (character.progressBand === "near") activeSegments = 3;
+      else if (character.progressBand === "marked") activeSegments = 2;
+      else activeSegments = 1; // "initial"
+    } else {
+      activeSegments = 0;
+    }
+    for (let i = 0; i < 3; i++) {
+      const seg = document.createElement("div");
+      seg.className = "progress-segment" + (i < activeSegments ? " active" : "");
+      track.appendChild(seg);
+    }
     realmBox.append(realmRow, track);
 
     // 3. 核心生息数值 (精力/疲劳、灵力、灵石、灵根、地点)
@@ -748,7 +759,7 @@
 
   function generateLocalSimulation(actionId, actionLabel, choice, currentState) {
     const char = currentState.character || {};
-    const currProgress = Number(char.cultivationProgress !== null && char.cultivationProgress !== undefined ? char.cultivationProgress : (char.progressInternal || 0));
+    const currProgress = Number(char.progressInternal || 0);
     const currFatigue = (char.fatigue && Number(char.fatigue.value)) || 0;
     const currLvl = (char.realm && Number(char.realm.level)) || 1;
     const currPower = (char.spiritualPower && Number(char.spiritualPower.value)) || 10;
@@ -792,12 +803,11 @@
         }
 
         const prevCultStatus = formatCultivationStatus(char);
-        const nextCultStatus = formatCultivationStatus({ ...char, cultivationProgress: newProgress });
+        const nextCultStatus = formatCultivationStatus({ ...char, progressInternal: newProgress });
         resourceChanges.push(
           { label: "修为积累", before: prevCultStatus, change: "有所精进", after: nextCultStatus, reason: "打坐运转心法" },
           { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "运功心神消耗" }
         );
-        charPatch.cultivationProgress = newProgress;
         charPatch.progressInternal = newProgress;
         const ratio = maxCultivation > 0 ? (newProgress / maxCultivation) : 0;
         if (ratio >= 1) {
@@ -866,12 +876,11 @@
           narration = formatTemplate(textLib.explore && textLib.explore.insight, { location: currentLoc });
           observations.push(obsLib.explore_insight || "观自然之象，灵台一片明澈。");
           const prevCultStatus = formatCultivationStatus(char);
-          const nextCultStatus = formatCultivationStatus({ ...char, cultivationProgress: newProgress });
+          const nextCultStatus = formatCultivationStatus({ ...char, progressInternal: newProgress });
           resourceChanges.push(
             { label: "修为积累", before: prevCultStatus, change: "感悟暗长", after: nextCultStatus, reason: "观悟自然" },
             { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "行路探索" }
           );
-          charPatch.cultivationProgress = newProgress;
           charPatch.progressInternal = newProgress;
           const ratio = maxCultivation > 0 ? (newProgress / maxCultivation) : 0;
           if (ratio >= 1) {
@@ -911,13 +920,12 @@
         narration = formatTemplate(textLib.combat && textLib.combat.win, { location: currentLoc, loot: lootDef.name });
         observations.push(obsLib.combat_win || "实战令术法反应更为敏锐。");
         const prevCultStatus = formatCultivationStatus(char);
-        const nextCultStatus = formatCultivationStatus({ ...char, cultivationProgress: newProgress });
+        const nextCultStatus = formatCultivationStatus({ ...char, progressInternal: newProgress });
         resourceChanges.push(
           { label: "修为积累", before: prevCultStatus, change: "实战精进", after: nextCultStatus, reason: "实战切磋磨砺" },
           { label: "物品", before: "原背包", change: `+${lootDef.name}×${lootQty}${lootDef.unit}`, after: "已收录", reason: "战利品缴获" },
           { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "激烈搏斗" }
         );
-        charPatch.cultivationProgress = newProgress;
         charPatch.progressInternal = newProgress;
         const ratio = maxCultivation > 0 ? (newProgress / maxCultivation) : 0;
         if (ratio >= 1) {
@@ -943,7 +951,6 @@
             const newPower = nextLvl * powerGain;
             const succFatigue = actCfg.successFatigue || 10;
             charPatch.realm = { name: "炼气", level: nextLvl, stage: null };
-            charPatch.cultivationProgress = 0;
             charPatch.progressInternal = 0;
             charPatch.realmStability = "consolidating";
             charPatch.progressBand = null;
@@ -1271,7 +1278,8 @@
 
   const CHARACTER_REQUIRED_FIELDS = [
     "id", "name", "age", "background", "identity", "spiritualRoot", "constitution",
-    "realm", "cultivationProgress", "spiritualPower", "fatigue", "injuries",
+    "realm", "progressInternal", "realmStability", "progressBand",
+    "spiritualPower", "fatigue", "injuries",
     "inventory", "currencyBalances", "relationships", "reputation", "debts",
     "goals", "activeTasks"
   ];
@@ -1302,6 +1310,12 @@
     }
     if (char.spiritRoots !== undefined) {
       throw new Error("角色状态包含已废弃的 spiritRoots 数组字段（应使用 spiritualRoot 字符串）。");
+    }
+    if (char.cultivationProgress !== undefined) {
+      throw new Error("角色状态包含已废弃的 cultivationProgress 字段，唯一权威字段为 progressInternal。");
+    }
+    if (char.progressInternal !== null && (typeof char.progressInternal !== "number" || char.progressInternal < 0)) {
+      throw new Error("progressInternal 必须为 null 或非负数值。");
     }
 
     validateRealm(char.realm);
@@ -1369,6 +1383,7 @@
       if (section === "character") {
         if (values.vitality !== undefined) throw new Error("禁止在 patch 中更新已废弃字段 vitality。");
         if (values.spiritRoots !== undefined) throw new Error("禁止在 patch 中更新已废弃字段 spiritRoots。");
+        if (values.cultivationProgress !== undefined) throw new Error("禁止在 patch 中更新已废弃字段 cultivationProgress，唯一权威字段为 progressInternal。");
         if (values.realm) validateRealm(values.realm);
         if (Array.isArray(values.currencyBalances)) {
           values.currencyBalances.forEach((cur, idx) => {

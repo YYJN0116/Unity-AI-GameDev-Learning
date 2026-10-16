@@ -41,7 +41,8 @@ const knownCurrencies = new Set();
 const CHARACTER_REQUIRED_FIELDS = [
   'id', 'name', 'age', 'background', 'identity',
   'spiritualRoot', 'constitution', 'realm',
-  'cultivationProgress', 'spiritualPower', 'fatigue',
+  'progressInternal', 'realmStability', 'progressBand',
+  'spiritualPower', 'fatigue',
   'injuries', 'inventory', 'currencyBalances',
   'relationships', 'reputation', 'debts', 'goals', 'activeTasks'
 ];
@@ -192,8 +193,20 @@ function validateCharacterCommon(file, idPrefix, character) {
   if ('spiritRoots' in character) {
     error(file, idPrefix, 'character.spiritRoots', 'Forbidden field "spiritRoots" array. Use single string "spiritualRoot" per v0.1-data-standard.md:49.');
   }
+  if ('cultivationProgress' in character) {
+    error(file, idPrefix, 'character.cultivationProgress', 'Forbidden legacy field "cultivationProgress" detected! Standard authority field is "progressInternal" per 10 baseline & N7.');
+  }
 
   // 3. 字段具体类型核对
+  if (character.progressInternal !== undefined && character.progressInternal !== null && (typeof character.progressInternal !== 'number' || character.progressInternal < 0)) {
+    error(file, idPrefix, 'character.progressInternal', 'Must be null or a non-negative number.');
+  }
+  if (character.realmStability !== undefined && !['unstable', 'stable', 'accumulating', 'ready', 'consolidating'].includes(character.realmStability)) {
+    error(file, idPrefix, 'character.realmStability', `Invalid realmStability "${character.realmStability}".`);
+  }
+  if (character.progressBand !== undefined && character.progressBand !== null && !['initial', 'marked', 'near'].includes(character.progressBand)) {
+    error(file, idPrefix, 'character.progressBand', `Invalid progressBand "${character.progressBand}".`);
+  }
   if (character.spiritualRoot !== undefined && typeof character.spiritualRoot !== 'string') {
     error(file, idPrefix, 'character.spiritualRoot', 'Must be a string.');
   }
