@@ -9,28 +9,42 @@
     "timeOfDayMinutes": 480
   },
   "character": {
+    "id": "",
     "name": "【待定角色】",
+    "age": null,
     "background": "初入仙途散修（占位）",
-    "realm": { "name": "炼气", "level": 1, "stage": null },
-    "cultivationProgress": 0,
-    "vitality": { "current": 20, "max": 20 },
-    "spiritualPower": { "current": 10, "max": 10 },
-    "spiritRoots": ["无属性"],
-    "fatigue": { "value": 0, "status": "精力充沛" },
-    "inventory": [],
-    "currencyBalances": [
-      { "currency": "下品灵石", "unit": "lowGradeSpiritStone", "amount": 0 }
-    ],
-    "relationships": [],
+    "identity": "",
+    "spiritualRoot": "",
+    "constitution": "",
+    "realm": {
+      "name": "感气",
+      "level": null,
+      "stage": null
+    },
+    "cultivationProgress": null,
+    "spiritualPower": {
+      "value": null,
+      "unit": null,
+      "controlState": ""
+    },
+    "fatigue": {
+      "value": null,
+      "scaleId": null,
+      "description": ""
+    },
     "injuries": [],
+    "inventory": [],
+    "currencyBalances": [],
+    "relationships": [],
+    "reputation": null,
     "debts": [],
-    "goals": ["踏上修仙长生之路"],
+    "goals": [],
     "activeTasks": []
   },
   "gameWorld": {
-    "continent": "【待定大陆】",
-    "location": "【占位地点】",
-    "faction": "无门无派"
+    "continent": "",
+    "location": "",
+    "faction": ""
   },
   "world": {
     "currentLocationId": "loc.placeholder-01",

@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "playwright test",
+    "build:data": "node scripts/build-data.js",
+    "check:data": "node scripts/build-data.js --check",
+    "validate": "node scripts/validate-schema.js",
+    "test": "node scripts/build-data.js --check && node scripts/validate-schema.js && playwright test",
     "test:headed": "playwright test --headed"
   },
   "devDependencies": {

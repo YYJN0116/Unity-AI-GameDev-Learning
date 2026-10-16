@@ -4,28 +4,79 @@
   "canon": false,
   "placeholder": true,
   "description": "供 M0 跑通开局测试流程的占位角色。正式正史角色待 YY 交付。",
+  "startLocationId": "loc.placeholder-01",
+  "openingFlags": {},
+  "resourceBudget": {
+    "currency": {
+      "lowGradeSpiritStone": 10
+    }
+  },
   "character": {
+    "id": "char.placeholder-01",
     "name": "李潜（测试名）",
+    "age": 16,
     "background": "初入仙途散修（占位身份）",
-    "realm": { "name": "炼气", "level": 1, "stage": null },
+    "identity": "散修",
+    "spiritualRoot": "四灵根",
+    "constitution": "凡体",
+    "realm": {
+      "name": "炼气",
+      "level": 1,
+      "stage": null
+    },
     "cultivationProgress": 10,
-    "vitality": { "current": 20, "max": 20 },
-    "spiritualPower": { "current": 10, "max": 10 },
-    "spiritRoots": ["灵气感应"],
-    "fatigue": { "value": 0, "status": "精力充沛" },
+    "spiritualPower": {
+      "value": 10,
+      "unit": "点",
+      "controlState": "平稳"
+    },
+    "fatigue": {
+      "value": 0,
+      "scaleId": "standard100",
+      "description": "精力充沛"
+    },
+    "injuries": [],
     "inventory": [
-      { "id": "item.placeholder-herb", "name": "基础伤药", "quantity": 2, "description": "占位补给" }
+      {
+        "itemId": "item.placeholder-herb",
+        "name": "基础伤药",
+        "quantity": 2,
+        "unit": "份",
+        "condition": "完好",
+        "ownerId": ""
+      }
     ],
     "currencyBalances": [
-      { "currency": "下品灵石", "unit": "lowGradeSpiritStone", "amount": 10 }
+      {
+        "unit": "lowGradeSpiritStone",
+        "amount": 10
+      }
     ],
     "relationships": [
-      { "target": "引导散修", "stage": "acquainted", "cause": "初入仙门指引" }
+      {
+        "npcId": "npc.placeholder-guide",
+        "affinity": "neutral",
+        "trust": "wary",
+        "respect": "neutral",
+        "fear": "none",
+        "obligations": [],
+        "interests": [],
+        "log": [
+          {
+            "atInGameDate": "0001-01-01",
+            "cause": "初入仙门指引",
+            "changed": "初次相识"
+          }
+        ]
+      }
     ],
-    "injuries": [],
+    "reputation": "默默无闻",
     "debts": [],
-    "goals": ["突破当前瓶颈"],
-    "activeTasks": ["巡查周边环境"]
-  },
-  "initialLocationId": "loc.placeholder-01"
+    "goals": [
+      "突破当前瓶颈"
+    ],
+    "activeTasks": [
+      "巡查周边环境"
+    ]
+  }
 }

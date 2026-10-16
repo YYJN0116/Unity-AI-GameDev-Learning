@@ -1,0 +1,37 @@
+{
+  "npcId": "npc.placeholder-guide",
+  "name": "引导散修（占位）",
+  "factionId": null,
+  "currentLocationId": "loc.placeholder-01",
+  "status": "暂定",
+  "canon": false,
+  "placeholder": true,
+  "relationAxes": {
+    "affinity": "neutral",
+    "trust": "wary",
+    "respect": "neutral",
+    "fear": "none"
+  },
+  "flagsOwned": [
+    "npc.placeholder-guide.met"
+  ],
+  "relatedEventIds": [],
+  "knowledgeBoundary": {
+    "knows": [
+      "周边坊市位置与基础吐纳常识"
+    ],
+    "believesWrongly": [],
+    "unawareOf": [
+      "主角身世与长生主线伏笔"
+    ]
+  },
+  "actionLogic": {
+    "possibleActions": [
+      "向路过散修传授基础吐纳避险口诀"
+    ],
+    "conditions": "初次相识且未起冲突",
+    "fallbackPlan": "若对方心生警惕则退回静修处打坐自保",
+    "willNotDoWithoutReason": "绝不会无缘无故赠送重宝或替陌生人拼命"
+  },
+  "currentPressure": "寿元将尽，气血渐衰，急需延寿或突破丹方线索"
+}

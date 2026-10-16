@@ -27,9 +27,16 @@
   "currencies": {
     "lowGradeSpiritStone": {
       "displayName": "下品灵石",
-      "unit": "枚",
-      "canon": false,
-      "placeholder": true
+      "displayUnit": "枚"
+    },
+    "fragment": {
+      "displayName": "碎灵",
+      "displayUnit": "枚",
+      "exchange": {
+        "to": "lowGradeSpiritStone",
+        "rate": 0.1,
+        "ledgerOnly": true
+      }
     }
   },
   "actions": {

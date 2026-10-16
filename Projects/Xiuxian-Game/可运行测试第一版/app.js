@@ -184,10 +184,10 @@
       createStatRow("✨ 灵力气海", `${powerVal} 缕`, "cyan"),
       createStatRow("💎 随身灵石", currency, "gold"),
       createStatRow("🌱 先天灵根", character.spiritualRoot || "未觉醒"),
-      createStatRow("📍 所处福地", state.gameWorld.location || "玄海荒地")
+      createStatRow("📍 所处福地", state.gameWorld.location || "【灵气汇聚之地】")
     );
 
-    // 4. 重要人际关系与好感度 (对应用户需求)
+    // 4. 重要人际关系与好感度 (多维离散模型 05 §0.3 / C5)
     const relBlock = document.createElement("div");
     relBlock.className = "sidebar-block";
     const relHeader = document.createElement("div");
@@ -196,22 +196,61 @@
     const relList = document.createElement("div");
     relList.className = "relation-list";
 
-    const displayRelationships = relationships.length ? relationships : [
-      { name: "采药老叟", status: "授业恩公 (好感 +80)" }
-    ];
+    if (relationships.length) {
+      const npcsMap = {};
+      if (Array.isArray(DATA.npcs)) {
+        DATA.npcs.forEach(n => { if (n.npcId) npcsMap[n.npcId] = n; });
+      }
 
-    displayRelationships.forEach((rel) => {
-      const item = document.createElement("div");
-      item.className = "relation-item";
-      const name = document.createElement("span");
-      name.className = "relation-npc";
-      name.textContent = rel.name || rel.npcId || "修士同行";
-      const tag = document.createElement("span");
-      tag.className = "relation-tag";
-      tag.textContent = rel.status || rel.description || "知交";
-      item.append(name, tag);
-      relList.appendChild(item);
-    });
+      const affinityLabels = { cold: "冷淡", neutral: "中立", warm: "亲近", close: "深交" };
+      const trustLabels = { suspicious: "猜忌", wary: "防备", trusting: "信任", reliant: "依托" };
+      const respectLabels = { dismissive: "轻视", neutral: "平视", respectful: "敬佩", reverent: "敬仰" };
+      const fearLabels = { none: "无", wary: "忌惮", fearful: "畏惧" };
+
+      relationships.forEach((rel) => {
+        const item = document.createElement("div");
+        item.className = "relation-item";
+        
+        const npcInfo = npcsMap[rel.npcId] || {};
+        const displayName = rel.name || npcInfo.name || rel.npcId || "修士同行";
+
+        const title = document.createElement("div");
+        title.className = "relation-npc";
+        title.textContent = displayName;
+
+        const axesGrid = document.createElement("div");
+        axesGrid.className = "relation-axes";
+        axesGrid.style.display = "flex";
+        axesGrid.style.flexWrap = "wrap";
+        axesGrid.style.gap = "4px";
+        axesGrid.style.marginTop = "3px";
+        axesGrid.style.fontSize = "11px";
+
+        function makeTag(label, valKey, labelMap) {
+          const tag = document.createElement("span");
+          tag.className = "relation-tag";
+          const val = valKey ? (labelMap[valKey] || valKey) : "未设定";
+          tag.textContent = `${label}: ${val}`;
+          return tag;
+        }
+
+        axesGrid.append(
+          makeTag("好感", rel.affinity, affinityLabels),
+          makeTag("信任", rel.trust, trustLabels),
+          makeTag("尊重", rel.respect, respectLabels),
+          makeTag("恐惧", rel.fear, fearLabels)
+        );
+
+        item.append(title, axesGrid);
+        relList.appendChild(item);
+      });
+    } else {
+      const emptyRel = document.createElement("p");
+      emptyRel.className = "small-text";
+      emptyRel.style.color = "var(--text-muted, #888)";
+      emptyRel.textContent = "暂无结识道友（初涉修仙界）。";
+      relList.appendChild(emptyRel);
+    }
     relBlock.append(relHeader, relList);
 
     // 5. 随身行囊
@@ -335,21 +374,23 @@
   }
 
   function getRandomEligible(items) {
-    const allowedStatuses = WORLD_DATABASE.selectionPolicy.randomEligibleStatuses;
+    if (!Array.isArray(items) || !items.length) {
+      return { id: "placeholder", name: "【待定】" };
+    }
+    const selectionPolicy = (WORLD_DATABASE && WORLD_DATABASE.selectionPolicy) || {};
+    const allowedStatuses = selectionPolicy.randomEligibleStatuses || ["provisional", "established", "rumor"];
     const eligible = items.filter((item) =>
-      item.randomEligible === true && allowedStatuses.includes(item.status) &&
+      item.randomEligible !== false && (item.status ? allowedStatuses.includes(item.status) : true) &&
       item.status !== "deprecated"
     );
-    if (!eligible.length) throw new Error("世界库中没有可随机抽取的合格条目。");
+    if (!eligible.length) return items[0];
     return eligible[Math.floor(Math.random() * eligible.length)];
   }
 
   function makeWorldSetupProposal() {
-    if (!Array.isArray(WORLD_DATABASE.continents) || !WORLD_DATABASE.continents.length) {
-      throw new Error("世界库尚无大陆条目。");
-    }
+    const continents = (WORLD_DATABASE && WORLD_DATABASE.continents) || [];
     return {
-      continent: WORLD_DATABASE.continents[0],
+      continent: continents.length ? continents[0] : { name: "【待定区域】" },
       location: getRandomEligible(WORLD_DATABASE.locations || []),
       faction: getRandomEligible(WORLD_DATABASE.factions || [])
     };
@@ -361,11 +402,9 @@
     if (!proposal || !summary) return;
     proposal.hidden = !pendingWorldSetup;
     if (!pendingWorldSetup) return;
-    summary.textContent = "大陆：" + pendingWorldSetup.continent.name +
-      "；地点：" + pendingWorldSetup.location.name +
-      "；势力：" + pendingWorldSetup.faction.name +
-      (WORLD_DATABASE.selectionPolicy.candidateRequiresPlayerConfirmation
-        ? "（候选设定，等待玩家确认）" : "");
+    summary.textContent = "区域：" + (pendingWorldSetup.continent ? pendingWorldSetup.continent.name : "【待定】") +
+      "；地点：" + (pendingWorldSetup.location ? pendingWorldSetup.location.name : "【待定】") +
+      "；势力：" + (pendingWorldSetup.faction ? pendingWorldSetup.faction.name : "【待定】");
   }
 
   function initStarterCharacter() {
@@ -375,8 +414,8 @@
 
     if (starter && starter.character) {
       nextState.character = clone(starter.character);
-      nextState.character.id = "char-" + Date.now().toString(36);
-      nextState.world.currentLocationId = starter.initialLocationId || "loc.placeholder-01";
+      nextState.character.id = starter.character.id || ("char-" + Date.now().toString(36));
+      nextState.world.currentLocationId = starter.startLocationId || starter.initialLocationId || "loc.placeholder-01";
       const locMatch = (WORLD_DATABASE.locations || []).find((l) => l.id === nextState.world.currentLocationId);
       nextState.gameWorld = {
         continent: "待定",
@@ -442,7 +481,7 @@
         if (!window.confirm("当前已有角色【" + state.character.name + "】，重新生成会重置当前进度，确认继续吗？")) return;
       }
       initStarterCharacter();
-      setMessage("已为你创建初始角色【陆青云】（炼气1层·火木双灵根），现在可以直接点击行动开始修仙！", false);
+      setMessage("已为你初始化角色【" + (state.character.name || "新手散修") + "】，现在可以直接点击行动开始修仙！", false);
     });
     const proposal = document.createElement("div");
     proposal.id = "world-setup-proposal";
@@ -619,14 +658,14 @@
   }
 
   const ACTION_PRESETS = {
-    cultivate: "在洞府内运转基础心法，吐纳天地灵气温养周天。",
+    cultivate: "运转基础心法，吐纳天地灵气温养周天。",
     explore: "前往周边灵气郁积之地巡查，搜寻野外药草与隐秘线索。",
-    task: "前往庶务堂领取日常杂役委托，协助宗门或坊市打理灵田。",
-    trade: "前往山脚坊市摊位打探行情，采买丹药与符箓补给。",
-    social: "与附近的同门或路遇散修攀谈，探听修仙界近期风声与传闻。",
-    combat: "前往后山险谷寻觅低阶凶兽切磋，磨砺御气与术法实战。",
+    task: "领取日常修仙杂役委托，协助清点资源或打理灵植。",
+    trade: "前往坊市摊位打探行情，采买丹药与补给。",
+    social: "与路遇修士攀谈，探听修仙界近期风声与传闻。",
+    combat: "寻觅低阶妖兽切磋，磨砺御气与术法实战。",
     breakthrough: "调息凝神，引全身灵力冲击当前境界屏障，尝试突破！",
-    rest: "回石榻闭关静卧调息，运功舒缓疲惫，恢复神识与精力。"
+    rest: "静卧闭目调息，运功舒缓疲惫，恢复神识与精力。"
   };
 
   function generateLocalSimulation(actionId, actionLabel, choice, currentState) {
@@ -635,7 +674,7 @@
     const currFatigue = (char.fatigue && Number(char.fatigue.value)) || 0;
     const currLvl = (char.realm && Number(char.realm.level)) || 1;
     const currPower = (char.spiritualPower && Number(char.spiritualPower.value)) || 10;
-    const currentLoc = currentState.gameWorld.location || "后山洞府";
+    const currentLoc = currentState.gameWorld.location || "【灵气汇聚之地】";
 
     let timeCostMinutes = 60;
     let actionOutcome = "success";
@@ -727,7 +766,7 @@
           );
         }
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: fatDesc };
-        nextActions.push("回洞府休整", "前往市集");
+        nextActions.push("闭目调息", "前往市集");
         break;
       }
       case "combat": {
@@ -796,7 +835,7 @@
         timeCostMinutes = (TUNING.actions && TUNING.actions.rest && TUNING.actions.rest.timeCostMinutes) || 360;
         charPatch.fatigue = { value: 0, scaleId: "0-100", description: "神清气爽" };
         charPatch.injuries = [];
-        narration = `你在洞府石榻之上安然入定调息。周天自行吐故纳新，抚平心神暗耗。待到再度睁眼，通体舒泰，神清气爽！`;
+        narration = `你寻得一处静室蒲团安然入定调息。周天自行吐故纳新，抚平心神暗耗。待到再度睁眼，通体舒泰，神清气爽！`;
         observations.push("精力已完全恢复，心神安宁。");
         resourceChanges.push(
           { label: "精力疲劳", before: String(currFatigue), change: `-${currFatigue}`, after: "0", reason: "静修调养" },
@@ -811,10 +850,10 @@
         const newFatigue = Math.min(100, currFatigue + fatigueGain);
         const reward = Math.floor(nextRandom() * 5) + 5;
         const currencies = clone(char.currencyBalances || []);
-        const stoneItem = currencies.find((c) => c.unit === "lowGradeSpiritStone" || c.currency === "下品灵石");
+        const stoneItem = currencies.find((c) => c.unit === "lowGradeSpiritStone");
         const beforeAmount = stoneItem ? stoneItem.amount : 0;
         if (stoneItem) stoneItem.amount += reward;
-        else currencies.push({ currency: "下品灵石", unit: "lowGradeSpiritStone", amount: reward });
+        else currencies.push({ unit: "lowGradeSpiritStone", amount: reward });
 
         narration = `你承接了日常杂事差使，协助打理琐碎庶务。整整半日辛劳奔走，按期完成交付，如约结算了 ${reward} 枚下品灵石酬劳。`;
         observations.push(`完成日常差使，获得下品灵石 ${reward} 枚。`);
@@ -824,7 +863,7 @@
         );
         charPatch.currencyBalances = currencies;
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: "筋骨酸胀" };
-        nextActions.push("前往市集采购", "回洞府休息");
+        nextActions.push("前往市集采购", "打坐调息");
         break;
       }
       case "trade": {
@@ -832,7 +871,7 @@
         const fatigueGain = 6;
         const newFatigue = Math.min(100, currFatigue + fatigueGain);
         const currencies = clone(char.currencyBalances || []);
-        const stoneItem = currencies.find((c) => c.unit === "lowGradeSpiritStone" || c.currency === "下品灵石");
+        const stoneItem = currencies.find((c) => c.unit === "lowGradeSpiritStone");
         const stones = stoneItem ? stoneItem.amount : 0;
 
         if (stones >= 6) {
@@ -855,7 +894,7 @@
           observations.push("打探了基础补给的行市。");
         }
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: "行走市井" };
-        nextActions.push("去接差使赚取灵石", "回洞府修炼");
+        nextActions.push("去接差使赚取灵石", "打坐修炼");
         break;
       }
       case "social": {
@@ -866,7 +905,7 @@
         observations.push("结识同道修士，探听得修仙界见闻传闻。");
         storyHook = null;
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: "精神松弛" };
-        nextActions.push("回洞府静修", "巡视周边环境");
+        nextActions.push("打坐静修", "巡视周边环境");
         break;
       }
       default: {
@@ -906,7 +945,7 @@
 
     if (!state.character || !state.character.name) {
       initStarterCharacter();
-      setMessage("已自动初始化新手角色【陆青云】，现在开始为你推演行动！", false);
+      setMessage("已自动初始化新手角色【" + (state.character.name || "新手散修") + "】，现在开始为你推演行动！", false);
     }
 
     try {
@@ -1122,7 +1161,7 @@
   function parseResponse() {
     try {
       const parsed = JSON.parse(cleanJSON(el("ai-response").value));
-      if (parsed.schemaVersion !== "0.1" || !parsed.result || !parsed.statePatch) {
+      if ((parsed.schemaVersion !== "0.2" && parsed.schemaVersion !== "0.1") || !parsed.result || !parsed.statePatch) {
         throw new Error("缺少 schemaVersion、result 或 statePatch。");
       }
       const result = parsed.result;
@@ -1327,7 +1366,7 @@
         }
         initStarterCharacter();
         close();
-        setMessage("已为你创建初始角色【陆青云】（炼气1层·火木双灵根），现在可以直接点击行动开始修仙！", false);
+        setMessage("已为你初始化角色【" + (state.character.name || "新手散修") + "】，现在可以直接点击行动开始修仙！", false);
       });
     }
   }
