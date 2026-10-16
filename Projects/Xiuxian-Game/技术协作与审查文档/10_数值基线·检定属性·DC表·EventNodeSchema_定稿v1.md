@@ -2,8 +2,8 @@
 
 | 项目 | 内容 |
 |---|---|
-| **产出方** | 小肥（联合编剧与数值架构师） |
-| **裁定方** | YY（2026-10-16） |
+| **产出方** | 小肥（Game Designer / 数值架构师） |
+| **裁定方** | YY（制作人 / Game Designer / 正史裁定者，2026-10-16） |
 | **依据** | `26_GM_Realm_Progression_Quantification`、`16_GM_Core_Numeric_Baseline`、`12_GM_Progression_Resource_Engine`、`13_GM_Resolution_Protocol`、`02_GM_Factions_NPC_Framework`、`10_GM_Key_NPC_Motivation_Dossiers`、`v0.1-data-standard.md` |
 | **替代** | 本文件取代《交接报告 v1》§6.1 的数值草案；与设定集冲突之处，一律以设定集为准 |
 | **交付** | 四份规范合并为一份文件。**理由**：四者互相引用（属性层被 DC 表用、DC 表被 check 用、check 在 Event Node 里、数值被 Effect 改），拆成四份必然漂移 |

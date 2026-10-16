@@ -74,3 +74,14 @@
 - **真正的单机自闭环**：无需配置 API Key，无需联网，内置离线推演引擎，随时随地秒玩。
 - **类似《仙途》的紧凑沉浸 UI**：单页零全局滚动条，左侧掌控人物属性与人脉好感度，中间纵览事件纪事与掷骰卡片。
 - **自编小说网状剧本（正在演进）**：未来将逐步接入作者自编的小说主支线剧情网，带来媲美互动小说的代入感。
+
+---
+
+## 👥 核心研发团队与角色分工 (Core Team & Roles)
+
+| 成员 | 角色与身份 | 职责边界 |
+|---|---|---|
+| **YY** (`YYJN0116`) | **制作人 / Game Designer / 正史唯一裁定者** (Producer & Lead Game Designer / Worldbuilder) | 掌控游戏总体设计、主线小说编剧、世界观与设定集正史唯一最高裁定权。 |
+| **小肥** (`DeepSeek`) | **Game Designer / 数值架构师** (Game Designer & Systems / Numerical Architect) | 负责底层系统设计、数值基线精算平衡、检定与属性模型构建、技术审查与复核。 |
+| **Antigravity** (`DeepMind`) | **引擎架构与前端工程实现** (Pair Programmer & Technical Architecture) | 负责单机引擎实现、数据驱动架构、前端界面交互、测试工程与自动化防回归护栏。 |
+
