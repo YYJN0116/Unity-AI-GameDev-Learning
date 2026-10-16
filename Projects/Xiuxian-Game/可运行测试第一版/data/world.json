@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "0.2",
+  "note": "通用世界骨架，不包含未经 YY 裁定的正史内容。所有初始条目均为加载测试用占位符。",
+  "continents": [],
+  "regions": [
+    {
+      "id": "region.placeholder-01",
+      "name": "【占位区域】",
+      "canon": false,
+      "placeholder": true,
+      "description": "供链路联调使用的占位区域，正史内容待编剧侧交付。"
+    }
+  ],
+  "locations": [
+    {
+      "id": "loc.placeholder-01",
+      "name": "【占位洞府】",
+      "regionId": "region.placeholder-01",
+      "canon": false,
+      "placeholder": true,
+      "description": "供开局初始化的占位地点。"
+    }
+  ],
+  "factions": []
+}

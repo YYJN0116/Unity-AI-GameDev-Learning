@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "0.2",
+  "sessionId": null,
+  "rngSeed": 123456789,
+  "rngCursor": 0,
+  "flags": {},
+  "updatedAt": {
+    "inGameDate": "0001-01-01",
+    "timeOfDayMinutes": 480
+  },
+  "character": {
+    "name": "【待定角色】",
+    "background": "初入仙途散修（占位）",
+    "realm": { "name": "炼气", "level": 1, "stage": null },
+    "cultivationProgress": 0,
+    "vitality": { "current": 20, "max": 20 },
+    "spiritualPower": { "current": 10, "max": 10 },
+    "spiritRoots": ["无属性"],
+    "fatigue": { "value": 0, "status": "精力充沛" },
+    "inventory": [],
+    "currencyBalances": [
+      { "currency": "下品灵石", "unit": "lowGradeSpiritStone", "amount": 0 }
+    ],
+    "relationships": [],
+    "injuries": [],
+    "debts": [],
+    "goals": ["踏上修仙长生之路"],
+    "activeTasks": []
+  },
+  "gameWorld": {
+    "continent": "【待定大陆】",
+    "location": "【占位地点】",
+    "faction": "无门无派"
+  },
+  "world": {
+    "currentLocationId": "loc.placeholder-01",
+    "events": [],
+    "offstageLog": [],
+    "simulatedThrough": {
+      "inGameDate": "0001-01-01",
+      "timeOfDayMinutes": 480
+    }
+  },
+  "ledger": []
+}

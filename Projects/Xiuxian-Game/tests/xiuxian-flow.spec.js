@@ -61,7 +61,7 @@ test('选择行动、生成提示词、pending 后继续结算并保存恢复', 
   await page.getByRole('button', { name: '确认并应用状态更新' }).click();
   await expect(page.locator('#app-message')).toContainText('本次状态变化已应用并保存');
 
-  const saved = await page.evaluate(() => localStorage.getItem('xiuxian-world-journal-v0.1'));
+  const saved = await page.evaluate(() => localStorage.getItem('xiuxian-world-journal-v0.2') || localStorage.getItem('xiuxian-world-journal-v0.1'));
   expect(saved).not.toBeNull();
 
   await page.reload();
@@ -69,6 +69,6 @@ test('选择行动、生成提示词、pending 后继续结算并保存恢复', 
   await expect(page.locator('#story-log')).toContainText('自动化流程测试完成');
   await expect(page.locator('#current-date')).not.toHaveText('-');
 
-  const restored = await page.evaluate(() => localStorage.getItem('xiuxian-world-journal-v0.1'));
+  const restored = await page.evaluate(() => localStorage.getItem('xiuxian-world-journal-v0.2') || localStorage.getItem('xiuxian-world-journal-v0.1'));
   expect(restored).not.toBeNull();
 });

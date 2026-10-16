@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "0.2",
+  "note": "数值基线与机制规则配置。未引入检定公式，静候编剧侧交付属性层与 DC 表。",
+  "fatigue": {
+    "min": 0,
+    "max": 100,
+    "thresholds": {
+      "light": 0,
+      "tired": 40,
+      "exhausted": 70
+    },
+    "labels": {
+      "light": "精力充沛",
+      "tired": "略感困乏",
+      "exhausted": "神魂俱疲"
+    }
+  },
+  "cultivation": {
+    "min": 0,
+    "max": 100,
+    "breakthroughEligibilityThreshold": 100
+  },
+  "time": {
+    "minutesPerShichen": 120,
+    "minutesPerDay": 1440
+  },
+  "currencies": {
+    "lowGradeSpiritStone": {
+      "displayName": "下品灵石",
+      "unit": "枚",
+      "canon": false,
+      "placeholder": true
+    }
+  },
+  "actions": {
+    "cultivate": { "timeCostMinutes": 120, "label": "修炼" },
+    "explore": { "timeCostMinutes": 60, "label": "探索" },
+    "task": { "timeCostMinutes": 180, "label": "任务" },
+    "trade": { "timeCostMinutes": 60, "label": "商贸 / 交易" },
+    "social": { "timeCostMinutes": 60, "label": "结交 / 交谈" },
+    "combat": { "timeCostMinutes": 90, "label": "试炼 / 战斗" },
+    "breakthrough": { "timeCostMinutes": 240, "label": "突破" },
+    "rest": { "timeCostMinutes": 360, "label": "休息 / 闭关" }
+  }
+}

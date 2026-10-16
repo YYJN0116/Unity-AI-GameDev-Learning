@@ -1,7 +1,8 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "xiuxian-world-journal-v0.1";
+  const STORAGE_KEY = "xiuxian-world-journal-v0.2";
+  const LEGACY_STORAGE_KEY = "xiuxian-world-journal-v0.1";
   const REALM_NAMES = ["感气", "炼气", "筑基", "金丹", "元婴", "化神", "炼虚", "合体", "大乘", "渡劫"];
   const STAGE_NAMES = ["初期", "中期", "后期", "圆满"];
   const ACTIONS = [
@@ -9,165 +10,21 @@
     ["trade", "商贸 / 交易"], ["social", "结交 / 交谈"],
     ["combat", "试炼 / 战斗"], ["breakthrough", "突破"], ["rest", "休息 / 闭关"]
   ];
-  const WORLD_DATABASE = {
-  "schemaVersion": "0.1",
-  "catalogStatus": "candidate_catalog",
-  "description": "条目源自 game-design.md 的建议清单，都是候选，不自动成为本局正史。",
-  "selectionPolicy": {
-    "randomEligibleStatuses": [
-      "candidate",
-      "active"
-    ],
-    "candidateRequiresPlayerConfirmation": true,
-    "doNotSelectDeprecated": true,
-    "selectOnlyWithinRequestedType": true
-  },
-  "continents": [
-    {
-      "id": "chenxi",
-      "name": "晨曦大陆",
-      "description": "修仙世界的主要舞台"
-    }
-  ],
-  "regions": [
-    {
-      "id": "xuanhai-wasteland",
-      "name": "玄海荒地",
-      "type": "wilderness_region",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §4.2",
-      "notes": "原文将其列入主要势力建议，但名称更像区域；正式定位待确认。"
-    },
-    {
-      "id": "old-dynasty-remains",
-      "name": "旧朝残迹",
-      "type": "historical_region_or_ruins",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §4.2",
-      "notes": "原文将其列入主要势力建议；具体是区域、遗迹还是势力待确认。"
-    }
-  ],
-  "locations": [
-    {
-      "id": "back-mountain-cave",
-      "name": "后山洞府",
-      "type": "cultivation_site",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §7",
-      "candidateDescription": "建议作为修炼地点；安全程度和可用条件须按本局设定。"
-    },
-    {
-      "id": "mountain-gate",
-      "name": "山门",
-      "type": "sect_site",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §7",
-      "candidateDescription": "可用于宗门事务、结识门人和获取消息。"
-    },
-    {
-      "id": "market",
-      "name": "坊市",
-      "type": "market",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §7",
-      "candidateDescription": "可用于交易、购买资源和获取外部消息；具体价格待本局校准。"
-    },
-    {
-      "id": "cold-spring-valley",
-      "name": "冷泉谷",
-      "type": "valley",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §7",
-      "candidateDescription": null
-    },
-    {
-      "id": "forest-secret-realm",
-      "name": "密林秘境",
-      "type": "secret_realm",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §7",
-      "candidateDescription": "可用于探索；危险、收益、入口和路程须按本局设定。"
-    },
-    {
-      "id": "forbidden-frontier",
-      "name": "禁地前沿",
-      "type": "frontier",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §7",
-      "candidateDescription": "候选事件地点；具体秘密、风险和用途待本局设定。"
-    }
-  ],
-  "factions": [
-    {
-      "id": "xuanfeng-sect",
-      "name": "玄风宗",
-      "type": "sect",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §4.2",
-      "values": null,
-      "influence": null,
-      "resources": null,
-      "keyCharacters": []
-    },
-    {
-      "id": "lieyan-valley",
-      "name": "烈焰谷",
-      "type": "sect",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §4.2",
-      "values": null,
-      "influence": null,
-      "resources": null,
-      "keyCharacters": []
-    },
-    {
-      "id": "yueyin-gate",
-      "name": "月隐门",
-      "type": "sect",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §4.2",
-      "values": null,
-      "influence": null,
-      "resources": null,
-      "keyCharacters": []
-    },
-    {
-      "id": "mortal-trade-association",
-      "name": "人间商会",
-      "type": "merchant_association",
-      "status": "candidate",
-      "randomEligible": true,
-      "requiresPlayerConfirmation": true,
-      "source": "game-design.md §4.2",
-      "values": null,
-      "influence": null,
-      "resources": null,
-      "keyCharacters": []
-    }
-  ]
-};
+
+  // 从 data-bundle.js 注入的全局数据源（双击 file:// 零 CORS 阻断）
+  const DATA = window.XIUXIAN_DATA || {};
+  const WORLD_DATABASE = DATA.world || { schemaVersion: "0.2", regions: [], locations: [], factions: [] };
+  const TUNING = DATA.tuning || {};
+
+  // 种子化伪随机数发生器 (Mulberry32) - 配合 state.rngSeed 与 state.rngCursor 保证续接精准一致
+  function nextRandom() {
+    if (!state.rngSeed && state.rngSeed !== 0) state.rngSeed = 123456789;
+    state.rngCursor = (state.rngCursor || 0) + 1;
+    let s = (state.rngSeed = (state.rngSeed + 0x6D2B79F5) | 0);
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
   const CHARACTER_PATCH_FIELDS = new Set([
     "name", "age", "background", "identity", "spiritualRoot", "constitution",
     "realm", "cultivationProgress", "spiritualPower", "fatigue", "injuries",
@@ -187,24 +44,34 @@
   }
 
   const clone = (value) => JSON.parse(JSON.stringify(value));
-  const makeInitialState = () => ({
-    schemaVersion: "0.1",
-    sessionId: "session-" + Date.now().toString(36),
-    updatedAt: { inGameDate: null, timeOfDayMinutes: null },
-    character: {
-      id: "", name: "", age: null, background: "", identity: "",
-      spiritualRoot: "", constitution: "",
-      realm: { name: "", level: null, stage: null },
-      cultivationProgress: null,
-      spiritualPower: { value: null, unit: null, controlState: "" },
-      fatigue: { value: null, scaleId: null, description: "" },
-      injuries: [], inventory: [], currencyBalances: [], relationships: [],
-      reputation: null, debts: [], goals: [], activeTasks: []
-    },
-    gameWorld: { continent: "", location: "", faction: "" },
-    world: { currentLocationId: "", events: [] },
-    ledger: []
-  });
+  const makeInitialState = () => {
+    if (DATA.stateTemplate) {
+      const cloned = clone(DATA.stateTemplate);
+      cloned.sessionId = "session-" + Date.now().toString(36);
+      return cloned;
+    }
+    return {
+      schemaVersion: "0.2",
+      sessionId: "session-" + Date.now().toString(36),
+      rngSeed: 123456789,
+      rngCursor: 0,
+      flags: {},
+      updatedAt: { inGameDate: null, timeOfDayMinutes: null },
+      character: {
+        id: "", name: "", age: null, background: "", identity: "",
+        spiritualRoot: "", constitution: "",
+        realm: { name: "", level: null, stage: null },
+        cultivationProgress: null,
+        spiritualPower: { value: null, unit: null, controlState: "" },
+        fatigue: { value: null, scaleId: null, description: "" },
+        injuries: [], inventory: [], currencyBalances: [], relationships: [],
+        reputation: null, debts: [], goals: [], activeTasks: []
+      },
+      gameWorld: { continent: "", location: "", faction: "" },
+      world: { currentLocationId: "", events: [], offstageLog: [], simulatedThrough: null },
+      ledger: []
+    };
+  };
 
   let state = makeInitialState();
   let pendingAction = null;
@@ -504,58 +371,37 @@
   function initStarterCharacter() {
     const previousState = state;
     const nextState = makeInitialState();
-    nextState.gameWorld = {
-      continent: "晨曦大陆",
-      location: "后山洞府",
-      faction: "玄风宗"
-    };
-    nextState.world.currentLocationId = "back-mountain-cave";
-    nextState.updatedAt = {
-      inGameDate: "2026-10-14",
-      timeOfDayMinutes: 480
-    };
-    nextState.character = {
-      id: "char-" + Date.now().toString(36),
-      name: "陆青云",
-      age: 16,
-      background: "边陲采药少年出身，偶得古修残卷而悟出微弱气感。",
-      identity: "初入仙途散修",
-      spiritualRoot: "火木双灵根",
-      constitution: "凡体（通灵）",
-      realm: { name: "炼气", level: 1, stage: null },
-      cultivationProgress: 10,
-      spiritualPower: { value: 10, unit: "缕", controlState: "初窥门径" },
-      fatigue: { value: 0, scaleId: "0-100", description: "神清气爽" },
-      injuries: [],
-      inventory: [
-        { name: "聚气草", quantity: 3, unit: "株" },
-        { name: "残损吐纳心法", quantity: 1, unit: "卷" }
-      ],
-      currencyBalances: [
-        { unit: "下品灵石", amount: 12 }
-      ],
-      relationships: [
-        { npcId: "old-herb-gatherer", name: "采药老叟", status: "半师之恩，曾指点草药知识" }
-      ],
-      reputation: "默默无闻",
-      debts: [],
-      goals: ["稳固炼气一层", "积攒灵石换取正统心法"],
-      activeTasks: ["在后山洞府静修吐纳"]
-    };
-    nextState.ledger = [{
-      at: clone(nextState.updatedAt),
-      action: { id: "init", label: "初踏仙途" },
-      actionOutcome: "success",
-      narration: "少年陆青云携数块下品灵石与半卷残篇，独居于后山洞府中。仙道渺渺，自今日始。",
-      observations: ["洞府内灵气尚可，避风挡雨，适宜闭关打坐。"],
-      timeCostMinutes: 0,
-      resourceChanges: [],
-      relationshipEventChanges: [],
-      nextActions: ["打坐修炼", "探索周边山谷"],
-      storyHook: "听说山脚坊市近日有商队采买灵草。",
-      decisionBasis: "新手启程开局",
-      statePatch: {}
-    }];
+    const starter = (DATA.starters && DATA.starters[0]) || null;
+
+    if (starter && starter.character) {
+      nextState.character = clone(starter.character);
+      nextState.character.id = "char-" + Date.now().toString(36);
+      nextState.world.currentLocationId = starter.initialLocationId || "loc.placeholder-01";
+      const locMatch = (WORLD_DATABASE.locations || []).find((l) => l.id === nextState.world.currentLocationId);
+      nextState.gameWorld = {
+        continent: "待定",
+        location: locMatch ? locMatch.name : "【占位地点】",
+        faction: "无门无派"
+      };
+      nextState.updatedAt = {
+        inGameDate: "0001-01-01",
+        timeOfDayMinutes: 480
+      };
+      nextState.ledger = [{
+        at: clone(nextState.updatedAt),
+        action: { id: "init", label: "初踏仙途" },
+        actionOutcome: "success",
+        narration: `修仙路远，道阻且长。${nextState.character.name}携些许随身用度，自今日始踏上求道长生之路。`,
+        observations: ["四方灵气微茫，天道玄远。"],
+        timeCostMinutes: 0,
+        resourceChanges: [],
+        relationshipEventChanges: [],
+        nextActions: ["打坐修炼", "探索周边"],
+        storyHook: null,
+        decisionBasis: "新手启程开局",
+        statePatch: {}
+      }];
+    }
     state = nextState;
     if (!saveState(false)) {
       state = previousState;
@@ -803,19 +649,19 @@
 
     switch (actionId) {
       case "cultivate": {
-        timeCostMinutes = 120;
-        const gain = Math.floor(Math.random() * 6) + 6;
+        timeCostMinutes = (TUNING.actions && TUNING.actions.cultivate && TUNING.actions.cultivate.timeCostMinutes) || 120;
+        const gain = Math.floor(nextRandom() * 6) + 6;
         const newProgress = Math.min(100, currProgress + gain);
         const fatigueGain = 12;
         const newFatigue = Math.min(100, currFatigue + fatigueGain);
         const fatDesc = newFatigue >= 70 ? "心力困顿" : newFatigue >= 40 ? "微有疲惫" : "神清气爽";
 
         if (newProgress >= 100) {
-          narration = `你盘膝坐定，心神内敛，在${currentLoc}内运转心法吐纳灵气。周天行满八十一转，丹田气海翻涌，灵光大炽！修为已臻至当前层次的大圆满瓶颈（100%），只待引气冲关，即可尝试【突破】！`;
+          narration = `你盘膝坐定，心神内敛，在${currentLoc}内运转基础心法温养周天。气海灵光大炽，修为已达当前层次的大圆满瓶颈（100%），只待引气冲关，即可尝试【突破】！`;
           observations.push("经脉内灵力充盈至极，隐隐触碰到境界壁障。");
           nextActions.push("尝试突破境界", "调整心境调息");
         } else {
-          narration = `你在${currentLoc}静室之中运转周天吐纳灵气。晨曦引气，暮霞归息，丝丝缕缕的天地灵气顺百会穴汇聚于气海，修为精进（+${gain}%）。`;
+          narration = `你在${currentLoc}之中运转周天吐纳天地灵气。丝丝缕缕的天地清气汇入丹田，温养周天，修为稳步精进（+${gain}%）。`;
           observations.push("吐纳顺畅，心无杂念。");
           nextActions.push("继续闭关修炼", "前往周边探索");
         }
@@ -828,91 +674,89 @@
         break;
       }
       case "explore": {
-        timeCostMinutes = 180;
+        timeCostMinutes = (TUNING.actions && TUNING.actions.explore && TUNING.actions.explore.timeCostMinutes) || 60;
         const fatigueGain = 20;
         const newFatigue = Math.min(100, currFatigue + fatigueGain);
         const fatDesc = newFatigue >= 70 ? "双腿酸软" : newFatigue >= 40 ? "微感疲惫" : "步履稳健";
-        const roll = Math.floor(Math.random() * 4);
+        const roll = Math.floor(nextRandom() * 4);
 
         if (roll === 0) {
-          const herbList = ["凝气草", "黄精灵芝", "紫猴花", "风尾花"];
-          const herb = herbList[Math.floor(Math.random() * herbList.length)];
+          const herb = "野灵草";
           const inv = clone(char.inventory || []);
           const existing = inv.find((item) => item.name === herb);
           if (existing) existing.quantity = (existing.quantity || 1) + 1;
-          else inv.push({ name: herb, quantity: 1, unit: "株" });
+          else inv.push({ id: "item.wild-herb", name: herb, quantity: 1, unit: "株" });
 
-          narration = `你在${currentLoc}的山岩险峭处循着微弱药香探寻，惊喜地在一处背阴石缝中发现了一株年份不错的【${herb}】，小心翼翼采摘收入囊中。`;
-          observations.push(`采摘到一株${herb}，可用于炼丹或坊市变现。`);
+          narration = `你在${currentLoc}周边细细寻查，在石缝中发现了一株散发着微弱灵光的【${herb}】，小心采摘收入囊中。`;
+          observations.push(`采摘到一株${herb}。`);
           resourceChanges.push(
             { label: "物品", before: "原背包", change: `+${herb}×1`, after: "已收录", reason: "山野采集" },
             { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "攀山跋涉" }
           );
           charPatch.inventory = inv;
         } else if (roll === 1) {
-          const found = Math.floor(Math.random() * 5) + 3;
+          const found = Math.floor(nextRandom() * 4) + 2;
           const currencies = clone(char.currencyBalances || []);
-          const stoneItem = currencies.find((c) => c.unit === "下品灵石");
+          const stoneItem = currencies.find((c) => c.unit === "lowGradeSpiritStone" || c.currency === "下品灵石");
           const beforeAmount = stoneItem ? stoneItem.amount : 0;
           if (stoneItem) stoneItem.amount += found;
-          else currencies.push({ unit: "下品灵石", amount: found });
+          else currencies.push({ currency: "下品灵石", unit: "lowGradeSpiritStone", amount: found });
 
-          narration = `在经过一处废弃的开凿旧矿洞时，你在碎石堆中察觉到了残存的微光，刨开沙石居然翻出了 ${found} 枚未被采尽的下品灵石！`;
+          narration = `在经过一处旧石穴时，你察觉到碎石中有微光闪烁，仔细翻找居然寻获了 ${found} 枚散落的下品灵石！`;
           observations.push(`收获下品灵石 ${found} 枚。`);
           resourceChanges.push(
-            { label: "下品灵石", before: String(beforeAmount), change: `+${found}`, after: String(beforeAmount + found), reason: "遗迹废矿淘得" },
-            { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "搜寻矿穴" }
+            { label: "下品灵石", before: String(beforeAmount), change: `+${found}`, after: String(beforeAmount + found), reason: "遗迹探寻淘得" },
+            { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "搜寻石穴" }
           );
           charPatch.currencyBalances = currencies;
         } else if (roll === 2) {
-          const gain = Math.floor(Math.random() * 5) + 4;
+          const gain = Math.floor(nextRandom() * 4) + 3;
           const newProgress = Math.min(100, currProgress + gain);
-          narration = `你漫步于山岭云海之间，忽见苍鹰击空，云聚云散，天地气象恢弘。心中忽有所触动，对灵气运转之法大有启发，修为暗长。`;
-          observations.push("观天地自然之理，灵台一片明澈。");
+          narration = `你漫步于山岭烟霞之间，观天地自然气象，心中忽有所悟，修为暗长。`;
+          observations.push("观自然之象，灵台一片明澈。");
           resourceChanges.push(
-            { label: "修为进度", before: `${currProgress}%`, change: `+${gain}%`, after: `${newProgress}%`, reason: "观自然领悟" },
-            { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "行路远游" }
+            { label: "修为进度", before: `${currProgress}%`, change: `+${gain}%`, after: `${newProgress}%`, reason: "观悟自然" },
+            { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "行路探索" }
           );
           charPatch.cultivationProgress = newProgress;
         } else {
-          narration = `你在古道荒林中巡弋半日，虽未掘得天地奇珍，但在泥沼旁发现了数道新鲜的妖兽蹄印与修士打斗痕迹，警觉地辨认了周边方位。`;
-          observations.push("附近林区似有一阶妖兽出没，需提高警惕。");
-          storyHook = "林深处隐隐有低沉兽吼传来。";
+          narration = `你在周边山道巡查半日，虽无额外奇遇，但将方圆地势与路径印记于心。`;
+          observations.push("四周灵机稳定，未见明显异动。");
           resourceChanges.push(
-            { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "谨慎侦查" }
+            { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "行路巡查" }
           );
         }
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: fatDesc };
-        nextActions.push("回洞府休整", "前往坊市交易");
+        nextActions.push("回洞府休整", "前往市集");
         break;
       }
       case "combat": {
-        timeCostMinutes = 90;
+        timeCostMinutes = (TUNING.actions && TUNING.actions.combat && TUNING.actions.combat.timeCostMinutes) || 90;
         const fatigueGain = 30;
         const newFatigue = Math.min(100, currFatigue + fatigueGain);
-        const gain = Math.floor(Math.random() * 5) + 5;
+        const gain = Math.floor(nextRandom() * 5) + 4;
         const newProgress = Math.min(100, currProgress + gain);
         const inv = clone(char.inventory || []);
-        const loot = "一阶妖兽材料";
+        const loot = "低阶兽材";
         const existing = inv.find((item) => item.name === loot);
         if (existing) existing.quantity = (existing.quantity || 1) + 1;
-        else inv.push({ name: loot, quantity: 1, unit: "份" });
+        else inv.push({ id: "item.beast-material", name: loot, quantity: 1, unit: "份" });
 
-        narration = `你在密林深处遭遇了一只一阶凶狡【赤目风狼】！你沉着应战，掐准时机引灵气护住要害，一记掌风直击其软肋，几番鏖战将其击毙，斩下妖兽材料。实战厮杀令你的御气手段越发纯熟！`;
-        observations.push("实战令术法反应更为迅敏，击杀赤目风狼。");
+        narration = `你在野外遭遇了一只低阶游荡灵兽！你引灵气护住周身，凝神施法沉着应对，几番回合后将其击退，斩获些许灵材。实战令你的真元运转更为纯熟！`;
+        observations.push("实战令术法反应更为敏锐。");
         resourceChanges.push(
-          { label: "修为进度", before: `${currProgress}%`, change: `+${gain}%`, after: `${newProgress}%`, reason: "生死搏杀实战磨砺" },
+          { label: "修为进度", before: `${currProgress}%`, change: `+${gain}%`, after: `${newProgress}%`, reason: "实战切磋磨砺" },
           { label: "物品", before: "原背包", change: `+${loot}×1`, after: "已收录", reason: "战利品缴获" },
           { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "激烈搏斗" }
         );
         charPatch.cultivationProgress = newProgress;
         charPatch.inventory = inv;
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: newFatigue >= 70 ? "气血翻腾" : "略有疲乏" };
-        nextActions.push("打坐运功调息", "前往坊市出售妖兽材料");
+        nextActions.push("打坐运功调息", "前往市集交易");
         break;
       }
       case "breakthrough": {
-        timeCostMinutes = 240;
+        timeCostMinutes = (TUNING.actions && TUNING.actions.breakthrough && TUNING.actions.breakthrough.timeCostMinutes) || 240;
         if (currProgress >= 100) {
           if (currLvl < 9) {
             const nextLvl = currLvl + 1;
@@ -921,8 +765,8 @@
             const newPower = nextLvl * 15;
             charPatch.spiritualPower = { value: newPower, unit: "缕", controlState: "运转如意" };
             charPatch.fatigue = { value: 10, scaleId: "0-100", description: "破关神爽" };
-            narration = `气冲紫府，灵海翻腾！在一阵如同琉璃破碎的清脆响声中，体内阻塞的经脉豁然开朗，汹涌澎湃的纯净灵力涌向四肢百骸——你成功打破桎梏，晋升至【炼气第 ${nextLvl} 层】！寿元绵长，气机更上层楼！`;
-            observations.push(`成功突破至炼气${nextLvl}层，神念与灵气上限大幅跃升。`);
+            narration = `气冲紫府，灵海翻腾！体内阻塞的经脉豁然贯通，周身灵力奔涌，你成功打破关隘，晋升至【炼气第 ${nextLvl} 层】！气机更上层楼！`;
+            observations.push(`成功突破至炼气${nextLvl}层，灵力上限提升。`);
             resourceChanges.push(
               { label: "境界", before: `炼气${currLvl}层`, change: "+1层", after: `炼气${nextLvl}层`, reason: "突破成功" },
               { label: "修为进度", before: "100%", change: "重置", after: "0%", reason: "开启新层次积淀" },
@@ -930,99 +774,99 @@
             );
             nextActions.push("稳固新境界修为", "习练新阶段术法");
           } else {
-            narration = `你已达炼气九层大圆满境界，体内灵力已凝若铅汞。想要脱凡化仙迈入【筑基】大道，必须备齐筑基丹，并寻得三品以上福地灵脉方能引动天地大劫！`;
-            observations.push("炼气境已至极巅，需谋划筑基之机。");
-            nextActions.push("打探筑基丹方", "搜寻洞天福地");
+            narration = `你已达炼气九层圆满境界，灵力充盈至极。脱凡迈入筑基大道机缘已至，筑基主线剧情将于后续篇章展开！`;
+            observations.push("炼气境已至顶峰，需谋划筑基机缘。");
+            nextActions.push("打探筑基之法", "稳固心境");
           }
         } else {
           actionOutcome = "partial";
           const fatigueGain = 15;
           const newFatigue = Math.min(100, currFatigue + fatigueGain);
-          narration = `你心急求成，引全身灵力冲击境界屏障，然而底蕴欠缺（当前修为仅 ${currProgress}%，尚未圆满），气浪反噬之下胸口微闷，屏障纹丝不动。你只得收功散气，暗自警惕欲速则不达之理。`;
+          narration = `你心急求成，引全身灵力冲击境界屏障。然而底蕴尚浅（当前修为 ${currProgress}%，尚未圆满），屏障纹丝不动。你只得收功止歇，暗自警惕欲速则不达。`;
           observations.push("底蕴尚浅，需修为达 100% 后再行冲关。");
           resourceChanges.push(
-            { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "强行冲关被反震" }
+            { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "强行冲关被震荡" }
           );
           charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: "经脉微酸" };
-          nextActions.push("老实闭关修炼", "服用丹药辅助");
+          nextActions.push("耐心闭关修炼", "调息静养");
         }
         break;
       }
       case "rest": {
-        timeCostMinutes = 480;
+        timeCostMinutes = (TUNING.actions && TUNING.actions.rest && TUNING.actions.rest.timeCostMinutes) || 360;
         charPatch.fatigue = { value: 0, scaleId: "0-100", description: "神清气爽" };
         charPatch.injuries = [];
-        narration = `你在洞府石榻之上点燃一炷静神香，安然入定调息。夜过三更，周天自行吐故纳新，抚平了所有经脉暗伤。待到晨光拂面，你豁然睁眼，神清气爽，通体舒泰！`;
-        observations.push("精力已完全恢复至巅峰，身体伤势痊愈。");
+        narration = `你在洞府石榻之上安然入定调息。周天自行吐故纳新，抚平心神暗耗。待到再度睁眼，通体舒泰，神清气爽！`;
+        observations.push("精力已完全恢复，心神安宁。");
         resourceChanges.push(
-          { label: "精力疲劳", before: String(currFatigue), change: `-${currFatigue}`, after: "0", reason: "长时静修调养" },
-          { label: "伤势", before: "旧伤", change: "痊愈", after: "无", reason: "功法温养自愈" }
+          { label: "精力疲劳", before: String(currFatigue), change: `-${currFatigue}`, after: "0", reason: "静修调养" },
+          { label: "伤势", before: "旧伤", change: "痊愈", after: "无", reason: "吐故纳新自愈" }
         );
-        nextActions.push("精力充沛，可前往探索或试炼", "运功打坐修炼");
+        nextActions.push("精力充沛，可前往探索", "打坐修炼");
         break;
       }
       case "task": {
-        timeCostMinutes = 240;
+        timeCostMinutes = (TUNING.actions && TUNING.actions.task && TUNING.actions.task.timeCostMinutes) || 180;
         const fatigueGain = 25;
         const newFatigue = Math.min(100, currFatigue + fatigueGain);
-        const reward = Math.floor(Math.random() * 5) + 6;
+        const reward = Math.floor(nextRandom() * 5) + 5;
         const currencies = clone(char.currencyBalances || []);
-        const stoneItem = currencies.find((c) => c.unit === "下品灵石");
+        const stoneItem = currencies.find((c) => c.unit === "lowGradeSpiritStone" || c.currency === "下品灵石");
         const beforeAmount = stoneItem ? stoneItem.amount : 0;
         if (stoneItem) stoneItem.amount += reward;
-        else currencies.push({ unit: "下品灵石", amount: reward });
+        else currencies.push({ currency: "下品灵石", unit: "lowGradeSpiritStone", amount: reward });
 
-        narration = `你前往庶务处承接了杂役差事，协助打理药圃并搬运沉重的赤炼灵矿石。整整半日挥汗如雨，虽颇感辛劳，但如期完成交付，执事验看后爽快结算了 ${reward} 块下品灵石酬劳。`;
-        observations.push(`完成宗门/坊市委托，获得下品灵石 ${reward} 块。`);
+        narration = `你承接了日常杂事差使，协助打理琐碎庶务。整整半日辛劳奔走，按期完成交付，如约结算了 ${reward} 枚下品灵石酬劳。`;
+        observations.push(`完成日常差使，获得下品灵石 ${reward} 枚。`);
         resourceChanges.push(
-          { label: "下品灵石", before: String(beforeAmount), change: `+${reward}`, after: String(beforeAmount + reward), reason: "日常差事酬报" },
-          { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "杂役劳作" }
+          { label: "下品灵石", before: String(beforeAmount), change: `+${reward}`, after: String(beforeAmount + reward), reason: "差使酬报" },
+          { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "劳作消耗" }
         );
         charPatch.currencyBalances = currencies;
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: "筋骨酸胀" };
-        nextActions.push("前往坊市消费", "回洞府休息");
+        nextActions.push("前往市集采购", "回洞府休息");
         break;
       }
       case "trade": {
-        timeCostMinutes = 60;
+        timeCostMinutes = (TUNING.actions && TUNING.actions.trade && TUNING.actions.trade.timeCostMinutes) || 60;
         const fatigueGain = 6;
         const newFatigue = Math.min(100, currFatigue + fatigueGain);
         const currencies = clone(char.currencyBalances || []);
-        const stoneItem = currencies.find((c) => c.unit === "下品灵石");
+        const stoneItem = currencies.find((c) => c.unit === "lowGradeSpiritStone" || c.currency === "下品灵石");
         const stones = stoneItem ? stoneItem.amount : 0;
 
         if (stones >= 6) {
           stoneItem.amount -= 6;
           const inv = clone(char.inventory || []);
-          const pill = "聚气丹";
+          const pill = "补气丸";
           const existing = inv.find((item) => item.name === pill);
           if (existing) existing.quantity = (existing.quantity || 1) + 1;
-          else inv.push({ name: pill, quantity: 1, unit: "枚" });
-          narration = `你在坊市喧闹的摊铺前驻足，花费 6 枚下品灵石从一位游方药师手中买下了一枚温润的【聚气丹】。药香扑鼻，品相完好。`;
-          observations.push("购入聚气丹一枚，可于突破或打坐时辅助加速。");
+          else inv.push({ id: "item.qi-pill", name: pill, quantity: 1, unit: "枚" });
+          narration = `你在市集摊铺前驻足，花费 6 枚下品灵石购置了一枚基础【${pill}】收入囊中。`;
+          observations.push(`购入${pill}一枚。`);
           resourceChanges.push(
             { label: "下品灵石", before: String(stones), change: "-6", after: String(stoneItem.amount), reason: "购置丹药" },
-            { label: "物品", before: "原背包", change: `+${pill}×1`, after: "已收录", reason: "坊市采购" }
+            { label: "物品", before: "原背包", change: `+${pill}×1`, after: "已收录", reason: "市集采购" }
           );
           charPatch.currencyBalances = currencies;
           charPatch.inventory = inv;
         } else {
-          narration = `你在坊市各家摊位前闲逛询价，铺面上各类法器、阵盘、丹药光晕流转。然而囊中羞涩（不足6块灵石），只能先暗记下各路物资市价，以待来日。`;
-          observations.push("打探了聚气丹与基础法器的行情。");
+          narration = `你在市集各家摊铺前盘点询价。因随身灵石不足（需 6 枚下品灵石），暂未进行采买，仅暗记下物资市价。`;
+          observations.push("打探了基础补给的行市。");
         }
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: "行走市井" };
-        nextActions.push("去接杂事赚取灵石", "回洞府修炼");
+        nextActions.push("去接差使赚取灵石", "回洞府修炼");
         break;
       }
       case "social": {
-        timeCostMinutes = 60;
+        timeCostMinutes = (TUNING.actions && TUNING.actions.social && TUNING.actions.social.timeCostMinutes) || 60;
         const fatigueGain = 8;
         const newFatigue = Math.min(100, currFatigue + fatigueGain);
-        narration = `你在茶寮与邻近洞府的几位道友围炉烹茶、互叙道行。几杯清茶下肚，众人畅谈各家修仙体会，不仅拓宽了见识，更听闻近期冷泉谷附近偶有祥云异彩，疑有古人洞府重现！`;
-        observations.push("结识同道修士，探听得修仙界最新机缘传闻。");
-        storyHook = "冷泉谷秘境异动传闻已传开。";
+        narration = `你与周遭的几位同道修士拱手攀谈，互通有无，闲话修仙心得，探听近期各方风声见闻。`;
+        observations.push("结识同道修士，探听得修仙界见闻传闻。");
+        storyHook = null;
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: "精神松弛" };
-        nextActions.push("与道友相约结伴探秘", "回洞府筹备法宝符箓");
+        nextActions.push("回洞府静修", "巡视周边环境");
         break;
       }
       default: {
@@ -1034,12 +878,12 @@
     }
 
     return {
-      schemaVersion: "0.1",
+      schemaVersion: "0.2",
       result: {
         narration,
         observations,
         actionOutcome,
-        decisionBasis: "本地模拟主持规则结算",
+        decisionBasis: "本地离线模拟规则结算",
         timeCostMinutes,
         resourceChanges,
         relationshipEventChanges,
@@ -1221,10 +1065,10 @@
   }
 
   function validateState(candidate) {
-    if (!candidate || candidate.schemaVersion !== "0.1" ||
+    if (!candidate || (candidate.schemaVersion !== "0.2" && candidate.schemaVersion !== "0.1") ||
         !candidate.character || !candidate.world || !candidate.gameWorld || !candidate.updatedAt ||
         !Array.isArray(candidate.ledger)) {
-      throw new Error("不是完整的 v0.1 存档。");
+      throw new Error("不是完整的合规存档。");
     }
     ["continent", "location", "faction"].forEach((key) => {
       if (typeof candidate.gameWorld[key] !== "string") {
@@ -1403,6 +1247,10 @@
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (!saved) {
+        if (localStorage.getItem(LEGACY_STORAGE_KEY)) {
+          setMessage("检测到旧版 v0.1 存档。当前游戏已正式升级至 v0.2 数据驱动架构，旧存档不兼容。请点击【新手开局】重新启程。", true);
+          return false;
+        }
         if (showFeedback) setMessage("此浏览器没有找到存档。", true);
         return false;
       }
