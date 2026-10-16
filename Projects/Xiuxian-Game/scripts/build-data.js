@@ -6,7 +6,7 @@
  * 功能特性：
  * 1. 纯确定性构建：移除非确定性时间戳，采用 inputsHash (SHA-256) 防止 git diff 噪声。
  * 2. --check 模式：比对磁盘产物与源数据是否同步，不一致则 exit 1，防止静默漂移。
- * 3. 完整收拢：打包 world、tuning、stateTemplate、starters 以及 npcs。
+ * 3. 完整收拢：打包 world、tuning、stateTemplate、starters、npcs、text、items。
  */
 
 const fs = require('fs');
@@ -47,6 +47,8 @@ const tuning = loadJSON(path.join(dataDir, 'tuning.json')) || {};
 const stateTemplate = loadJSON(path.join(dataDir, 'state-template.json')) || {};
 const starters = loadJSONDirectory(path.join(dataDir, 'starters'));
 const npcs = loadJSONDirectory(path.join(dataDir, 'npcs'));
+const text = loadJSON(path.join(dataDir, 'text', 'narration.json')) || {};
+const items = loadJSON(path.join(dataDir, 'items', 'items.json')) || [];
 
 // 计算输入内容确定性哈希
 const hash = crypto.createHash('sha256');
@@ -55,6 +57,8 @@ hash.update(JSON.stringify(tuning));
 hash.update(JSON.stringify(stateTemplate));
 hash.update(JSON.stringify(starters));
 hash.update(JSON.stringify(npcs));
+hash.update(JSON.stringify(text));
+hash.update(JSON.stringify(items));
 const inputsHash = 'sha256:' + hash.digest('hex');
 
 const bundleData = {
@@ -64,7 +68,9 @@ const bundleData = {
   tuning,
   stateTemplate,
   starters,
-  npcs
+  npcs,
+  text,
+  items
 };
 
 const outputContent = `/**
@@ -98,5 +104,5 @@ if (isCheckMode) {
   fs.writeFileSync(outputFile, outputContent, 'utf8');
   console.log(`[build-data] ✅ Data successfully bundled to ${outputFile}`);
   console.log(`             Inputs Hash: ${inputsHash}`);
-  console.log(`             Contents: ${starters.length} starters, ${npcs.length} npcs, ${world.locations ? world.locations.length : 0} locations.`);
+  console.log(`             Contents: ${starters.length} starters, ${npcs.length} npcs, ${items.length} items, ${world.locations ? world.locations.length : 0} locations.`);
 }

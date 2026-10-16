@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.2",
-  "note": "数值基线与机制规则配置。未引入检定公式，静候编剧侧交付属性层与 DC 表。",
+  "note": "数值基线与机制规则配置。所有行动数值、疲劳消耗、产出参数与物价由此集中驱动。",
   "fatigue": {
     "min": 0,
     "max": 100,
@@ -40,13 +40,60 @@
     }
   },
   "actions": {
-    "cultivate": { "timeCostMinutes": 120, "label": "修炼" },
-    "explore": { "timeCostMinutes": 60, "label": "探索" },
-    "task": { "timeCostMinutes": 180, "label": "任务" },
-    "trade": { "timeCostMinutes": 60, "label": "商贸 / 交易" },
-    "social": { "timeCostMinutes": 60, "label": "结交 / 交谈" },
-    "combat": { "timeCostMinutes": 90, "label": "试炼 / 战斗" },
-    "breakthrough": { "timeCostMinutes": 240, "label": "突破" },
-    "rest": { "timeCostMinutes": 360, "label": "休息 / 闭关" }
+    "cultivate": {
+      "timeCostMinutes": 120,
+      "label": "修炼",
+      "fatigueGain": 12,
+      "progressGainRange": [6, 11]
+    },
+    "explore": {
+      "timeCostMinutes": 60,
+      "label": "探索",
+      "fatigueGain": 20,
+      "herbDropItemId": "item.wild-herb",
+      "herbDropQuantity": 1,
+      "stoneFindRange": [2, 5],
+      "progressGainRange": [3, 7]
+    },
+    "combat": {
+      "timeCostMinutes": 90,
+      "label": "试炼 / 战斗",
+      "fatigueGain": 30,
+      "lootItemId": "item.beast-material",
+      "lootQuantity": 1,
+      "progressGainRange": [4, 8]
+    },
+    "breakthrough": {
+      "timeCostMinutes": 240,
+      "label": "突破",
+      "failFatigueGain": 15,
+      "successFatigue": 10,
+      "powerGainPerLevel": 15
+    },
+    "rest": {
+      "timeCostMinutes": 360,
+      "label": "休息 / 闭关",
+      "fatigueResetValue": 0
+    },
+    "task": {
+      "timeCostMinutes": 180,
+      "label": "任务",
+      "fatigueGain": 25,
+      "rewardCurrency": "lowGradeSpiritStone",
+      "rewardRange": [5, 9]
+    },
+    "trade": {
+      "timeCostMinutes": 60,
+      "label": "商贸 / 交易",
+      "fatigueGain": 6,
+      "buyItemId": "item.qi-pill",
+      "buyCostCurrency": "lowGradeSpiritStone",
+      "buyCostAmount": 6
+    },
+    "social": {
+      "timeCostMinutes": 60,
+      "label": "结交 / 交谈",
+      "fatigueGain": 8
+    }
   }
 }

@@ -379,9 +379,79 @@ function validateNPCs(npcsDir) {
   });
 }
 
+const knownItems = new Set();
+
+function validateItems(itemsFile) {
+  if (!fs.existsSync(itemsFile)) {
+    error('items/items.json', null, 'root', 'File does not exist.');
+    return;
+  }
+  let items;
+  try {
+    items = JSON.parse(fs.readFileSync(itemsFile, 'utf8'));
+  } catch (e) {
+    error('items/items.json', null, 'json_syntax', e.message);
+    return;
+  }
+  if (!Array.isArray(items)) {
+    error('items/items.json', null, 'root', 'Items must be an array.');
+    return;
+  }
+  items.forEach((item, idx) => {
+    if (!item.id || typeof item.id !== 'string') {
+      error('items/items.json', null, `[${idx}].id`, 'Missing id.');
+    } else if (knownItems.has(item.id)) {
+      error('items/items.json', item.id, 'id', `Duplicate item id "${item.id}".`);
+    } else {
+      knownItems.add(item.id);
+    }
+    if (!item.name || typeof item.name !== 'string') {
+      error('items/items.json', item.id, 'name', 'Missing name.');
+    }
+    if (!item.unit || typeof item.unit !== 'string') {
+      error('items/items.json', item.id, 'unit', 'Missing unit.');
+    }
+    if (typeof item.basePrice !== 'number' || item.basePrice <= 0) {
+      error('items/items.json', item.id, 'basePrice', 'Must be a positive number.');
+    }
+  });
+}
+
+function validateNarration(narrationFile) {
+  if (!fs.existsSync(narrationFile)) {
+    error('text/narration.json', null, 'root', 'File does not exist.');
+    return;
+  }
+  let narr;
+  try {
+    narr = JSON.parse(fs.readFileSync(narrationFile, 'utf8'));
+  } catch (e) {
+    error('text/narration.json', null, 'json_syntax', e.message);
+    return;
+  }
+  if (narr.schemaVersion !== '0.2') {
+    error('text/narration.json', null, 'schemaVersion', `Expected "0.2", got "${narr.schemaVersion}".`);
+  }
+  if (!narr.actions || typeof narr.actions !== 'object') {
+    error('text/narration.json', null, 'actions', 'Missing actions mapping.');
+    return;
+  }
+  const requiredActions = ['cultivate', 'explore', 'task', 'trade', 'social', 'combat', 'breakthrough', 'rest'];
+  requiredActions.forEach(act => {
+    if (!narr.actions[act]) {
+      error('text/narration.json', act, `actions.${act}`, `Missing narration for action "${act}".`);
+    }
+  });
+  if (!narr.observations || typeof narr.observations !== 'object') {
+    error('text/narration.json', null, 'observations', 'Missing observations mapping.');
+  }
+}
+
 console.log('[validate-schema] Starting schema validation in: ' + dataDir);
 validateWorld(path.join(dataDir, 'world.json'));
+validateItems(path.join(dataDir, 'items', 'items.json'));
 validateTuning(path.join(dataDir, 'tuning.json'));
+validateNarration(path.join(dataDir, 'text', 'narration.json'));
 validateStateTemplate(path.join(dataDir, 'state-template.json'));
 validateStarters(path.join(dataDir, 'starters'));
 validateNPCs(path.join(dataDir, 'npcs'));

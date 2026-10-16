@@ -111,9 +111,13 @@
 
   function renderState() {
     const character = state.character;
-    const currency = (character.currencyBalances || []).map((item) =>
-      (item.unit || "灵石") + " " + formatValue(item.amount)
-    ).join("、") || "0 块";
+    const currenciesConfig = (TUNING && TUNING.currencies) || {};
+    const currency = (character.currencyBalances || []).map((item) => {
+      const cfg = currenciesConfig[item.unit] || {};
+      const name = cfg.displayName || "下品灵石";
+      const unit = cfg.displayUnit || "枚";
+      return `${name} ${formatValue(item.amount)} ${unit}`;
+    }).join("、") || "0 枚";
     const inventory = character.inventory || [];
     const relationships = character.relationships || [];
     const progressNum = character.cultivationProgress === null ? 0 : Number(character.cultivationProgress) || 0;
@@ -263,10 +267,17 @@
     invList.className = "inventory-list";
 
     if (inventory.length) {
+      const itemsMap = {};
+      if (Array.isArray(DATA.items)) {
+        DATA.items.forEach(it => { itemsMap[it.id] = it; });
+      }
       inventory.forEach((item) => {
         const chip = document.createElement("span");
         chip.className = "inv-chip";
-        chip.textContent = `${item.name || "物品"} ×${item.quantity || 1}`;
+        const def = itemsMap[item.itemId || item.id] || {};
+        const name = item.name || def.name || "物品";
+        const unit = item.unit || def.unit || "件";
+        chip.textContent = `${name} ×${item.quantity || 1} ${unit}`;
         invList.appendChild(chip);
       });
     } else {
@@ -384,7 +395,7 @@
       item.status !== "deprecated"
     );
     if (!eligible.length) return items[0];
-    return eligible[Math.floor(Math.random() * eligible.length)];
+    return eligible[Math.floor(nextRandom() * eligible.length)];
   }
 
   function makeWorldSetupProposal() {
@@ -657,7 +668,33 @@
     panel.append(label, response, parseButton, preview, applyButton);
   }
 
-  const ACTION_PRESETS = {
+  function formatTemplate(template, vars) {
+    if (!template) return "";
+    return template.replace(/\{(\w+)\}/g, (match, key) => {
+      return vars && vars[key] !== undefined ? String(vars[key]) : match;
+    });
+  }
+
+  function getItemDef(itemId) {
+    const items = DATA.items || [];
+    return items.find((it) => it.id === itemId) || { id: itemId, name: itemId, unit: "个" };
+  }
+
+  function getCurrencyDef(unit) {
+    const currencies = (TUNING && TUNING.currencies) || {};
+    return currencies[unit] || { displayName: unit, displayUnit: "枚" };
+  }
+
+  function getFatigueDescription(fatigueVal) {
+    const cfg = TUNING.fatigue || {};
+    const thresholds = cfg.thresholds || { light: 0, tired: 40, exhausted: 70 };
+    const labels = cfg.labels || { light: "精力充沛", tired: "略感困乏", exhausted: "神魂俱疲" };
+    if (fatigueVal >= thresholds.exhausted) return labels.exhausted;
+    if (fatigueVal >= thresholds.tired) return labels.tired;
+    return labels.light;
+  }
+
+  const ACTION_PRESETS = (DATA.text && DATA.text.actionPresets) || {
     cultivate: "运转基础心法，吐纳天地灵气温养周天。",
     explore: "前往周边灵气郁积之地巡查，搜寻野外药草与隐秘线索。",
     task: "领取日常修仙杂役委托，协助清点资源或打理灵植。",
@@ -675,6 +712,10 @@
     const currLvl = (char.realm && Number(char.realm.level)) || 1;
     const currPower = (char.spiritualPower && Number(char.spiritualPower.value)) || 10;
     const currentLoc = currentState.gameWorld.location || "【灵气汇聚之地】";
+    const maxFatigue = (TUNING.fatigue && TUNING.fatigue.max) || 100;
+    const textLib = (DATA.text && DATA.text.actions) || {};
+    const obsLib = (DATA.text && DATA.text.observations) || {};
+    const sugLib = (DATA.text && DATA.text.nextActionSuggestions) || {};
 
     let timeCostMinutes = 60;
     let actionOutcome = "success";
@@ -688,21 +729,23 @@
 
     switch (actionId) {
       case "cultivate": {
-        timeCostMinutes = (TUNING.actions && TUNING.actions.cultivate && TUNING.actions.cultivate.timeCostMinutes) || 120;
-        const gain = Math.floor(nextRandom() * 6) + 6;
+        const actCfg = (TUNING.actions && TUNING.actions.cultivate) || {};
+        timeCostMinutes = actCfg.timeCostMinutes || 120;
+        const [minG, maxG] = actCfg.progressGainRange || [6, 11];
+        const gain = Math.floor(nextRandom() * (maxG - minG + 1)) + minG;
         const newProgress = Math.min(100, currProgress + gain);
-        const fatigueGain = 12;
-        const newFatigue = Math.min(100, currFatigue + fatigueGain);
-        const fatDesc = newFatigue >= 70 ? "心力困顿" : newFatigue >= 40 ? "微有疲惫" : "神清气爽";
+        const fatigueGain = actCfg.fatigueGain || 12;
+        const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
+        const fatDesc = getFatigueDescription(newFatigue);
 
         if (newProgress >= 100) {
-          narration = `你盘膝坐定，心神内敛，在${currentLoc}内运转基础心法温养周天。气海灵光大炽，修为已达当前层次的大圆满瓶颈（100%），只待引气冲关，即可尝试【突破】！`;
-          observations.push("经脉内灵力充盈至极，隐隐触碰到境界壁障。");
-          nextActions.push("尝试突破境界", "调整心境调息");
+          narration = formatTemplate(textLib.cultivate && textLib.cultivate.full, { location: currentLoc, gain });
+          observations.push(obsLib.cultivate_full || "经脉内灵力充盈至极，隐隐触碰到境界壁障。");
+          nextActions = clone(sugLib.cultivate_full || ["尝试突破境界", "调整心境调息"]);
         } else {
-          narration = `你在${currentLoc}之中运转周天吐纳天地灵气。丝丝缕缕的天地清气汇入丹田，温养周天，修为稳步精进（+${gain}%）。`;
-          observations.push("吐纳顺畅，心无杂念。");
-          nextActions.push("继续闭关修炼", "前往周边探索");
+          narration = formatTemplate(textLib.cultivate && textLib.cultivate.progress, { location: currentLoc, gain });
+          observations.push(obsLib.cultivate_progress || "周天吐纳顺畅，心无杂念。");
+          nextActions = clone(sugLib.cultivate || ["继续闭关修炼", "前往周边探索"]);
         }
         resourceChanges.push(
           { label: "修为进度", before: `${currProgress}%`, change: `+${gain}%`, after: `${newProgress}%`, reason: "打坐运转心法" },
@@ -713,205 +756,249 @@
         break;
       }
       case "explore": {
-        timeCostMinutes = (TUNING.actions && TUNING.actions.explore && TUNING.actions.explore.timeCostMinutes) || 60;
-        const fatigueGain = 20;
-        const newFatigue = Math.min(100, currFatigue + fatigueGain);
-        const fatDesc = newFatigue >= 70 ? "双腿酸软" : newFatigue >= 40 ? "微感疲惫" : "步履稳健";
+        const actCfg = (TUNING.actions && TUNING.actions.explore) || {};
+        timeCostMinutes = actCfg.timeCostMinutes || 60;
+        const fatigueGain = actCfg.fatigueGain || 20;
+        const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
+        const fatDesc = getFatigueDescription(newFatigue);
         const roll = Math.floor(nextRandom() * 4);
 
         if (roll === 0) {
-          const herb = "野灵草";
+          const itemId = actCfg.herbDropItemId || "item.wild-herb";
+          const itemDef = getItemDef(itemId);
+          const qty = actCfg.herbDropQuantity || 1;
           const inv = clone(char.inventory || []);
-          const existing = inv.find((item) => item.name === herb);
-          if (existing) existing.quantity = (existing.quantity || 1) + 1;
-          else inv.push({ id: "item.wild-herb", name: herb, quantity: 1, unit: "株" });
+          const existing = inv.find((item) => item.itemId === itemId || item.id === itemId || item.name === itemDef.name);
+          if (existing) existing.quantity = (existing.quantity || 1) + qty;
+          else inv.push({ id: itemDef.id, itemId: itemDef.id, name: itemDef.name, quantity: qty, unit: itemDef.unit });
 
-          narration = `你在${currentLoc}周边细细寻查，在石缝中发现了一株散发着微弱灵光的【${herb}】，小心采摘收入囊中。`;
-          observations.push(`采摘到一株${herb}。`);
+          narration = formatTemplate(textLib.explore && textLib.explore.herb, { location: currentLoc, itemName: itemDef.name });
+          observations.push(formatTemplate(obsLib.explore_herb || "采摘到一株{itemName}。", { itemName: itemDef.name }));
           resourceChanges.push(
-            { label: "物品", before: "原背包", change: `+${herb}×1`, after: "已收录", reason: "山野采集" },
+            { label: "物品", before: "原背包", change: `+${itemDef.name}×${qty}${itemDef.unit}`, after: "已收录", reason: "山野采集" },
             { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "攀山跋涉" }
           );
           charPatch.inventory = inv;
         } else if (roll === 1) {
-          const found = Math.floor(nextRandom() * 4) + 2;
+          const [sMin, sMax] = actCfg.stoneFindRange || [2, 5];
+          const found = Math.floor(nextRandom() * (sMax - sMin + 1)) + sMin;
+          const currencyUnit = "lowGradeSpiritStone";
+          const currencyDef = getCurrencyDef(currencyUnit);
           const currencies = clone(char.currencyBalances || []);
-          const stoneItem = currencies.find((c) => c.unit === "lowGradeSpiritStone" || c.currency === "下品灵石");
+          const stoneItem = currencies.find((c) => c.unit === currencyUnit);
           const beforeAmount = stoneItem ? stoneItem.amount : 0;
           if (stoneItem) stoneItem.amount += found;
-          else currencies.push({ currency: "下品灵石", unit: "lowGradeSpiritStone", amount: found });
+          else currencies.push({ unit: currencyUnit, amount: found });
 
-          narration = `在经过一处旧石穴时，你察觉到碎石中有微光闪烁，仔细翻找居然寻获了 ${found} 枚散落的下品灵石！`;
-          observations.push(`收获下品灵石 ${found} 枚。`);
+          narration = formatTemplate(textLib.explore && textLib.explore.stone, {
+            location: currentLoc,
+            found,
+            currencyName: currencyDef.displayName
+          });
+          observations.push(formatTemplate(obsLib.explore_stone || "收获{currencyName} {found} 枚。", {
+            found,
+            currencyName: currencyDef.displayName
+          }));
           resourceChanges.push(
-            { label: "下品灵石", before: String(beforeAmount), change: `+${found}`, after: String(beforeAmount + found), reason: "遗迹探寻淘得" },
+            { label: currencyDef.displayName, before: String(beforeAmount), change: `+${found}`, after: String(beforeAmount + found), reason: "遗迹探寻淘得" },
             { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "搜寻石穴" }
           );
           charPatch.currencyBalances = currencies;
         } else if (roll === 2) {
-          const gain = Math.floor(nextRandom() * 4) + 3;
+          const [pMin, pMax] = actCfg.progressGainRange || [3, 7];
+          const gain = Math.floor(nextRandom() * (pMax - pMin + 1)) + pMin;
           const newProgress = Math.min(100, currProgress + gain);
-          narration = `你漫步于山岭烟霞之间，观天地自然气象，心中忽有所悟，修为暗长。`;
-          observations.push("观自然之象，灵台一片明澈。");
+          narration = formatTemplate(textLib.explore && textLib.explore.insight, { location: currentLoc, gain });
+          observations.push(obsLib.explore_insight || "观自然之象，灵台一片明澈。");
           resourceChanges.push(
             { label: "修为进度", before: `${currProgress}%`, change: `+${gain}%`, after: `${newProgress}%`, reason: "观悟自然" },
             { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "行路探索" }
           );
           charPatch.cultivationProgress = newProgress;
         } else {
-          narration = `你在周边山道巡查半日，虽无额外奇遇，但将方圆地势与路径印记于心。`;
-          observations.push("四周灵机稳定，未见明显异动。");
+          narration = formatTemplate(textLib.explore && textLib.explore.scenery, { location: currentLoc });
+          observations.push(obsLib.explore_scenery || "四周灵机稳定，未见明显异动。");
           resourceChanges.push(
             { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "行路巡查" }
           );
         }
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: fatDesc };
-        nextActions.push("闭目调息", "前往市集");
+        nextActions = clone(sugLib.explore || ["闭目调息", "前往市集"]);
         break;
       }
       case "combat": {
-        timeCostMinutes = (TUNING.actions && TUNING.actions.combat && TUNING.actions.combat.timeCostMinutes) || 90;
-        const fatigueGain = 30;
-        const newFatigue = Math.min(100, currFatigue + fatigueGain);
-        const gain = Math.floor(nextRandom() * 5) + 4;
+        const actCfg = (TUNING.actions && TUNING.actions.combat) || {};
+        timeCostMinutes = actCfg.timeCostMinutes || 90;
+        const fatigueGain = actCfg.fatigueGain || 30;
+        const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
+        const [pMin, pMax] = actCfg.progressGainRange || [4, 8];
+        const gain = Math.floor(nextRandom() * (pMax - pMin + 1)) + pMin;
         const newProgress = Math.min(100, currProgress + gain);
+        const lootId = actCfg.lootItemId || "item.beast-material";
+        const lootDef = getItemDef(lootId);
+        const lootQty = actCfg.lootQuantity || 1;
         const inv = clone(char.inventory || []);
-        const loot = "低阶兽材";
-        const existing = inv.find((item) => item.name === loot);
-        if (existing) existing.quantity = (existing.quantity || 1) + 1;
-        else inv.push({ id: "item.beast-material", name: loot, quantity: 1, unit: "份" });
+        const existing = inv.find((item) => item.itemId === lootId || item.id === lootId || item.name === lootDef.name);
+        if (existing) existing.quantity = (existing.quantity || 1) + lootQty;
+        else inv.push({ id: lootDef.id, itemId: lootDef.id, name: lootDef.name, quantity: lootQty, unit: lootDef.unit });
 
-        narration = `你在野外遭遇了一只低阶游荡灵兽！你引灵气护住周身，凝神施法沉着应对，几番回合后将其击退，斩获些许灵材。实战令你的真元运转更为纯熟！`;
-        observations.push("实战令术法反应更为敏锐。");
+        narration = formatTemplate(textLib.combat && textLib.combat.win, { location: currentLoc, loot: lootDef.name });
+        observations.push(obsLib.combat_win || "实战令术法反应更为敏锐。");
         resourceChanges.push(
           { label: "修为进度", before: `${currProgress}%`, change: `+${gain}%`, after: `${newProgress}%`, reason: "实战切磋磨砺" },
-          { label: "物品", before: "原背包", change: `+${loot}×1`, after: "已收录", reason: "战利品缴获" },
+          { label: "物品", before: "原背包", change: `+${lootDef.name}×${lootQty}${lootDef.unit}`, after: "已收录", reason: "战利品缴获" },
           { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "激烈搏斗" }
         );
         charPatch.cultivationProgress = newProgress;
         charPatch.inventory = inv;
-        charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: newFatigue >= 70 ? "气血翻腾" : "略有疲乏" };
-        nextActions.push("打坐运功调息", "前往市集交易");
+        charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: getFatigueDescription(newFatigue) };
+        nextActions = clone(sugLib.combat || ["打坐运功调息", "前往市集交易"]);
         break;
       }
       case "breakthrough": {
-        timeCostMinutes = (TUNING.actions && TUNING.actions.breakthrough && TUNING.actions.breakthrough.timeCostMinutes) || 240;
-        if (currProgress >= 100) {
+        const actCfg = (TUNING.actions && TUNING.actions.breakthrough) || {};
+        timeCostMinutes = actCfg.timeCostMinutes || 240;
+        const threshold = (TUNING.cultivation && TUNING.cultivation.breakthroughEligibilityThreshold) || 100;
+
+        if (currProgress >= threshold) {
           if (currLvl < 9) {
             const nextLvl = currLvl + 1;
+            const powerGain = actCfg.powerGainPerLevel || 15;
+            const newPower = nextLvl * powerGain;
+            const succFatigue = actCfg.successFatigue || 10;
             charPatch.realm = { name: "炼气", level: nextLvl, stage: null };
             charPatch.cultivationProgress = 0;
-            const newPower = nextLvl * 15;
             charPatch.spiritualPower = { value: newPower, unit: "缕", controlState: "运转如意" };
-            charPatch.fatigue = { value: 10, scaleId: "0-100", description: "破关神爽" };
-            narration = `气冲紫府，灵海翻腾！体内阻塞的经脉豁然贯通，周身灵力奔涌，你成功打破关隘，晋升至【炼气第 ${nextLvl} 层】！气机更上层楼！`;
-            observations.push(`成功突破至炼气${nextLvl}层，灵力上限提升。`);
+            charPatch.fatigue = { value: succFatigue, scaleId: "0-100", description: "破关神爽" };
+            narration = formatTemplate(textLib.breakthrough && textLib.breakthrough.success, { nextLvl });
+            observations.push(formatTemplate(obsLib.breakthrough_success || "成功突破至炼气{nextLvl}层，灵力上限提升。", { nextLvl }));
             resourceChanges.push(
               { label: "境界", before: `炼气${currLvl}层`, change: "+1层", after: `炼气${nextLvl}层`, reason: "突破成功" },
               { label: "修为进度", before: "100%", change: "重置", after: "0%", reason: "开启新层次积淀" },
               { label: "灵力上限", before: `${currPower}缕`, change: `+${newPower - currPower}`, after: `${newPower}缕`, reason: "丹田扩张" }
             );
-            nextActions.push("稳固新境界修为", "习练新阶段术法");
+            nextActions = clone(sugLib.breakthrough_success || ["稳固新境界修为", "习练新阶段术法"]);
           } else {
-            narration = `你已达炼气九层圆满境界，灵力充盈至极。脱凡迈入筑基大道机缘已至，筑基主线剧情将于后续篇章展开！`;
-            observations.push("炼气境已至顶峰，需谋划筑基机缘。");
-            nextActions.push("打探筑基之法", "稳固心境");
+            narration = textLib.breakthrough && textLib.breakthrough.cap || "你已达炼气九层圆满境界，灵力充盈至极。脱凡迈入筑基大道机缘已至，筑基主线剧情将于后续篇章展开！";
+            observations.push(obsLib.breakthrough_cap || "炼气境已至顶峰，需谋划筑基机缘。");
+            nextActions = clone(sugLib.breakthrough_cap || ["打探筑基之法", "稳固心境"]);
           }
         } else {
           actionOutcome = "partial";
-          const fatigueGain = 15;
-          const newFatigue = Math.min(100, currFatigue + fatigueGain);
-          narration = `你心急求成，引全身灵力冲击境界屏障。然而底蕴尚浅（当前修为 ${currProgress}%，尚未圆满），屏障纹丝不动。你只得收功止歇，暗自警惕欲速则不达。`;
-          observations.push("底蕴尚浅，需修为达 100% 后再行冲关。");
+          const fatigueGain = actCfg.failFatigueGain || 15;
+          const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
+          narration = formatTemplate(textLib.breakthrough && textLib.breakthrough.fail, { currProgress });
+          observations.push(obsLib.breakthrough_fail || "底蕴尚浅，需修为达 100% 后再行冲关。");
           resourceChanges.push(
             { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "强行冲关被震荡" }
           );
-          charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: "经脉微酸" };
-          nextActions.push("耐心闭关修炼", "调息静养");
+          charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: getFatigueDescription(newFatigue) };
+          nextActions = clone(sugLib.breakthrough_fail || ["耐心闭关修炼", "调息静养"]);
         }
         break;
       }
       case "rest": {
-        timeCostMinutes = (TUNING.actions && TUNING.actions.rest && TUNING.actions.rest.timeCostMinutes) || 360;
-        charPatch.fatigue = { value: 0, scaleId: "0-100", description: "神清气爽" };
+        const actCfg = (TUNING.actions && TUNING.actions.rest) || {};
+        timeCostMinutes = actCfg.timeCostMinutes || 360;
+        const resetVal = actCfg.fatigueResetValue !== undefined ? actCfg.fatigueResetValue : 0;
+        charPatch.fatigue = { value: resetVal, scaleId: "0-100", description: "神清气爽" };
         charPatch.injuries = [];
-        narration = `你寻得一处静室蒲团安然入定调息。周天自行吐故纳新，抚平心神暗耗。待到再度睁眼，通体舒泰，神清气爽！`;
-        observations.push("精力已完全恢复，心神安宁。");
+        narration = textLib.rest && textLib.rest.done || "你寻得一处静室蒲团安然入定调息。周天自行吐故纳新，抚平心神暗耗。待到再度睁眼，通体舒泰，神清气爽！";
+        observations.push(obsLib.rest_done || "精力已完全恢复，心神安宁。");
         resourceChanges.push(
-          { label: "精力疲劳", before: String(currFatigue), change: `-${currFatigue}`, after: "0", reason: "静修调养" },
+          { label: "精力疲劳", before: String(currFatigue), change: `-${currFatigue}`, after: String(resetVal), reason: "静修调养" },
           { label: "伤势", before: "旧伤", change: "痊愈", after: "无", reason: "吐故纳新自愈" }
         );
-        nextActions.push("精力充沛，可前往探索", "打坐修炼");
+        nextActions = clone(sugLib.rest || ["精力充沛，可前往探索", "打坐修炼"]);
         break;
       }
       case "task": {
-        timeCostMinutes = (TUNING.actions && TUNING.actions.task && TUNING.actions.task.timeCostMinutes) || 180;
-        const fatigueGain = 25;
-        const newFatigue = Math.min(100, currFatigue + fatigueGain);
-        const reward = Math.floor(nextRandom() * 5) + 5;
+        const actCfg = (TUNING.actions && TUNING.actions.task) || {};
+        timeCostMinutes = actCfg.timeCostMinutes || 180;
+        const fatigueGain = actCfg.fatigueGain || 25;
+        const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
+        const [rMin, rMax] = actCfg.rewardRange || [5, 9];
+        const reward = Math.floor(nextRandom() * (rMax - rMin + 1)) + rMin;
+        const currencyUnit = actCfg.rewardCurrency || "lowGradeSpiritStone";
+        const currencyDef = getCurrencyDef(currencyUnit);
         const currencies = clone(char.currencyBalances || []);
-        const stoneItem = currencies.find((c) => c.unit === "lowGradeSpiritStone");
+        const stoneItem = currencies.find((c) => c.unit === currencyUnit);
         const beforeAmount = stoneItem ? stoneItem.amount : 0;
         if (stoneItem) stoneItem.amount += reward;
-        else currencies.push({ unit: "lowGradeSpiritStone", amount: reward });
+        else currencies.push({ unit: currencyUnit, amount: reward });
 
-        narration = `你承接了日常杂事差使，协助打理琐碎庶务。整整半日辛劳奔走，按期完成交付，如约结算了 ${reward} 枚下品灵石酬劳。`;
-        observations.push(`完成日常差使，获得下品灵石 ${reward} 枚。`);
+        narration = formatTemplate(textLib.task && textLib.task.done, { reward, currencyName: currencyDef.displayName });
+        observations.push(formatTemplate(obsLib.task_done || "完成日常差使，获得{currencyName} {reward} 枚。", { reward, currencyName: currencyDef.displayName }));
         resourceChanges.push(
-          { label: "下品灵石", before: String(beforeAmount), change: `+${reward}`, after: String(beforeAmount + reward), reason: "差使酬报" },
+          { label: currencyDef.displayName, before: String(beforeAmount), change: `+${reward}`, after: String(beforeAmount + reward), reason: "差使酬报" },
           { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "劳作消耗" }
         );
         charPatch.currencyBalances = currencies;
-        charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: "筋骨酸胀" };
-        nextActions.push("前往市集采购", "打坐调息");
+        charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: getFatigueDescription(newFatigue) };
+        nextActions = clone(sugLib.task || ["前往市集采购", "打坐调息"]);
         break;
       }
       case "trade": {
-        timeCostMinutes = (TUNING.actions && TUNING.actions.trade && TUNING.actions.trade.timeCostMinutes) || 60;
-        const fatigueGain = 6;
-        const newFatigue = Math.min(100, currFatigue + fatigueGain);
+        const actCfg = (TUNING.actions && TUNING.actions.trade) || {};
+        timeCostMinutes = actCfg.timeCostMinutes || 60;
+        const fatigueGain = actCfg.fatigueGain || 6;
+        const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
+        const costCurrency = actCfg.buyCostCurrency || "lowGradeSpiritStone";
+        const costAmount = actCfg.buyCostAmount !== undefined ? actCfg.buyCostAmount : 6;
+        const currencyDef = getCurrencyDef(costCurrency);
+        const buyItemId = actCfg.buyItemId || "item.qi-pill";
+        const buyItemDef = getItemDef(buyItemId);
         const currencies = clone(char.currencyBalances || []);
-        const stoneItem = currencies.find((c) => c.unit === "lowGradeSpiritStone");
+        const stoneItem = currencies.find((c) => c.unit === costCurrency);
         const stones = stoneItem ? stoneItem.amount : 0;
 
-        if (stones >= 6) {
-          stoneItem.amount -= 6;
+        if (stones >= costAmount) {
+          stoneItem.amount -= costAmount;
           const inv = clone(char.inventory || []);
-          const pill = "补气丸";
-          const existing = inv.find((item) => item.name === pill);
+          const existing = inv.find((item) => item.itemId === buyItemId || item.id === buyItemId || item.name === buyItemDef.name);
           if (existing) existing.quantity = (existing.quantity || 1) + 1;
-          else inv.push({ id: "item.qi-pill", name: pill, quantity: 1, unit: "枚" });
-          narration = `你在市集摊铺前驻足，花费 6 枚下品灵石购置了一枚基础【${pill}】收入囊中。`;
-          observations.push(`购入${pill}一枚。`);
+          else inv.push({ id: buyItemDef.id, itemId: buyItemDef.id, name: buyItemDef.name, quantity: 1, unit: buyItemDef.unit });
+
+          narration = formatTemplate(textLib.trade && textLib.trade.buy, {
+            cost: costAmount,
+            pill: buyItemDef.name,
+            currencyName: currencyDef.displayName
+          });
+          observations.push(formatTemplate(obsLib.trade_buy || "购入{pill}一枚。", { pill: buyItemDef.name }));
           resourceChanges.push(
-            { label: "下品灵石", before: String(stones), change: "-6", after: String(stoneItem.amount), reason: "购置丹药" },
-            { label: "物品", before: "原背包", change: `+${pill}×1`, after: "已收录", reason: "市集采购" }
+            { label: currencyDef.displayName, before: String(stones), change: `-${costAmount}`, after: String(stoneItem.amount), reason: "购置丹药" },
+            { label: "物品", before: "原背包", change: `+${buyItemDef.name}×1${buyItemDef.unit}`, after: "已收录", reason: "市集采购" }
           );
           charPatch.currencyBalances = currencies;
           charPatch.inventory = inv;
         } else {
-          narration = `你在市集各家摊铺前盘点询价。因随身灵石不足（需 6 枚下品灵石），暂未进行采买，仅暗记下物资市价。`;
-          observations.push("打探了基础补给的行市。");
+          narration = formatTemplate(textLib.trade && textLib.trade.shortage, {
+            cost: costAmount,
+            currencyName: currencyDef.displayName
+          });
+          observations.push(obsLib.trade_shortage || "打探了基础补给的行市。");
         }
-        charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: "行走市井" };
-        nextActions.push("去接差使赚取灵石", "打坐修炼");
+        charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: getFatigueDescription(newFatigue) };
+        nextActions = clone(sugLib.trade || ["去接差使赚取灵石", "打坐修炼"]);
         break;
       }
       case "social": {
-        timeCostMinutes = (TUNING.actions && TUNING.actions.social && TUNING.actions.social.timeCostMinutes) || 60;
-        const fatigueGain = 8;
-        const newFatigue = Math.min(100, currFatigue + fatigueGain);
-        narration = `你与周遭的几位同道修士拱手攀谈，互通有无，闲话修仙心得，探听近期各方风声见闻。`;
-        observations.push("结识同道修士，探听得修仙界见闻传闻。");
+        const actCfg = (TUNING.actions && TUNING.actions.social) || {};
+        timeCostMinutes = actCfg.timeCostMinutes || 60;
+        const fatigueGain = actCfg.fatigueGain || 8;
+        const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
+        narration = textLib.social && textLib.social.done || "你与周遭的几位同道修士拱手攀谈，互通有无，闲话修仙心得，探听近期各方风声见闻。";
+        observations.push(obsLib.social_done || "结识同道修士，探听得修仙界见闻传闻。");
         storyHook = null;
-        charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: "精神松弛" };
-        nextActions.push("打坐静修", "巡视周边环境");
+        charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: getFatigueDescription(newFatigue) };
+        nextActions = clone(sugLib.social || ["打坐静修", "巡视周边环境"]);
         break;
       }
       default: {
         timeCostMinutes = 60;
-        narration = `你在${currentLoc}付诸行动：${choice}。一番施为后，事情有了阶段性进展。`;
-        charPatch.fatigue = { value: Math.min(100, currFatigue + 10), scaleId: "0-100", description: "精力正常" };
+        narration = formatTemplate(textLib.default && textLib.default.done, { location: currentLoc, choice });
+        charPatch.fatigue = { value: Math.min(maxFatigue, currFatigue + 10), scaleId: "0-100", description: getFatigueDescription(currFatigue + 10) };
+        nextActions = clone(sugLib.default || ["继续静修", "四处查探"]);
         break;
       }
     }
@@ -1044,7 +1131,7 @@
       "timeCostMinutes 必须为非负整数。浏览器会据此推进日期；不要在 statePatch 中修改 updatedAt、sessionId 或 ledger。",
       "若规则、日期或数据不足以结算，请在叙事中说明并将结果标为 pending，不要猜测。",
       "输出必须是单一 JSON 对象，结构如下，字段全部必填：",
-      '{"schemaVersion":"0.1","result":{"narration":"","observations":[],"actionOutcome":"success","decisionBasis":"","timeCostMinutes":0,"resourceChanges":[],"relationshipEventChanges":[],"nextActions":[],"storyHook":null},"statePatch":{}}',
+      '{"schemaVersion":"0.2","result":{"narration":"","observations":[],"actionOutcome":"success","decisionBasis":"","timeCostMinutes":0,"resourceChanges":[],"relationshipEventChanges":[],"nextActions":[],"storyHook":null},"statePatch":{}}',
       "actionOutcome 只能为 success/partial/failure/pending；resourceChanges 每项须含 label、before、change、after、reason。",
       "statePatch 仅能包含 character、world 或 gameWorld；character 只可改标准字段，world 只可改 currentLocationId/events，gameWorld 只可改 continent/location/faction。列表字段给出完整新列表。",
       "pending 时 timeCostMinutes 必须为 0 且 statePatch 必须为 {}。不要修改 updatedAt、sessionId、ledger。",
@@ -1103,6 +1190,13 @@
     }
   }
 
+  const CHARACTER_REQUIRED_FIELDS = [
+    "id", "name", "age", "background", "identity", "spiritualRoot", "constitution",
+    "realm", "cultivationProgress", "spiritualPower", "fatigue", "injuries",
+    "inventory", "currencyBalances", "relationships", "reputation", "debts",
+    "goals", "activeTasks"
+  ];
+
   function validateState(candidate) {
     if (!candidate || (candidate.schemaVersion !== "0.2" && candidate.schemaVersion !== "0.1") ||
         !candidate.character || !candidate.world || !candidate.gameWorld || !candidate.updatedAt ||
@@ -1114,11 +1208,44 @@
         throw new Error("gameWorld." + key + " 必须为字符串。");
       }
     });
-    validateRealm(candidate.character.realm);
+
+    const char = candidate.character;
+    // 逆向必填校验：确保所有角色核心字段均存在
+    for (const f of CHARACTER_REQUIRED_FIELDS) {
+      if (char[f] === undefined) {
+        throw new Error("角色字段 " + f + " 缺失（违反 0.2 数据标准）。");
+      }
+    }
+
+    // 严禁旧版废弃字段
+    if (char.vitality !== undefined) {
+      throw new Error("角色状态包含已废弃的 vitality 字段（应整合至 fatigue）。");
+    }
+    if (char.spiritRoots !== undefined) {
+      throw new Error("角色状态包含已废弃的 spiritRoots 数组字段（应使用 spiritualRoot 字符串）。");
+    }
+
+    validateRealm(char.realm);
+
     ["inventory", "currencyBalances", "relationships", "injuries", "debts", "goals", "activeTasks"]
       .forEach((key) => {
-        if (!Array.isArray(candidate.character[key])) throw new Error("角色字段 " + key + " 必须为数组。");
+        if (!Array.isArray(char[key])) throw new Error("角色字段 " + key + " 必须为数组。");
       });
+
+    // 运行时校验 currencyBalances 条目形状
+    char.currencyBalances.forEach((cur, idx) => {
+      if (!cur || typeof cur !== "object") throw new Error("currencyBalances[" + idx + "] 必须为对象。");
+      if (typeof cur.unit !== "string" || !cur.unit) {
+        throw new Error("currencyBalances[" + idx + "].unit 缺失或不是字符串。");
+      }
+      if (typeof cur.amount !== "number" || isNaN(cur.amount)) {
+        throw new Error("currencyBalances[" + idx + "].amount 必须为数字。");
+      }
+      if (cur.currency !== undefined) {
+        throw new Error("currencyBalances[" + idx + "] 严禁包含已废弃的 currency 字段（必须使用 unit 机器键）。");
+      }
+    });
+
     const date = candidate.updatedAt.inGameDate;
     const minute = candidate.updatedAt.timeOfDayMinutes;
     if (date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1140,7 +1267,18 @@
       Object.keys(values).forEach((key) => {
         if (!allowed.has(key)) throw new Error("不允许更新字段：" + section + "." + key);
       });
-      if (section === "character" && values.realm) validateRealm(values.realm);
+      if (section === "character") {
+        if (values.vitality !== undefined) throw new Error("禁止在 patch 中更新已废弃字段 vitality。");
+        if (values.spiritRoots !== undefined) throw new Error("禁止在 patch 中更新已废弃字段 spiritRoots。");
+        if (values.realm) validateRealm(values.realm);
+        if (Array.isArray(values.currencyBalances)) {
+          values.currencyBalances.forEach((cur, idx) => {
+            if (cur && cur.currency !== undefined) {
+              throw new Error("statePatch.character.currencyBalances[" + idx + "] 严禁包含已废弃的 currency 字段。");
+            }
+          });
+        }
+      }
       ["injuries", "inventory", "currencyBalances", "relationships", "debts", "goals", "activeTasks"]
         .forEach((key) => {
           if (values[key] !== undefined && !Array.isArray(values[key])) {

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "item.wild-herb",
+    "name": "野灵草",
+    "unit": "株",
+    "category": "material",
+    "description": "山间常见的初级草药，蕴含少许温润灵气。",
+    "basePrice": 3
+  },
+  {
+    "id": "item.beast-material",
+    "name": "低阶兽材",
+    "unit": "份",
+    "category": "material",
+    "description": "游荡妖兽遗留的皮毛或骨片，可用于炼器或兑换资财。",
+    "basePrice": 4
+  },
+  {
+    "id": "item.qi-pill",
+    "name": "补气丸",
+    "unit": "枚",
+    "category": "pill",
+    "description": "低阶修士常用的滋补丹药，可温养真元舒缓疲乏。",
+    "basePrice": 6
+  },
+  {
+    "id": "item.placeholder-herb",
+    "name": "基础伤药",
+    "unit": "份",
+    "category": "medicine",
+    "description": "寻常外敷药散，用于处理微小擦伤与筋骨劳损。",
+    "basePrice": 2
+  }
+]
