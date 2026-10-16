@@ -224,6 +224,32 @@ function validateCharacterCommon(file, idPrefix, character) {
     });
   }
 
+  if (Array.isArray(character.inventory)) {
+    character.inventory.forEach((item, idx) => {
+      if (!item || typeof item !== 'object') {
+        error(file, idPrefix, `character.inventory[${idx}]`, 'Must be an object.');
+        return;
+      }
+      if (!item.itemId || typeof item.itemId !== 'string') {
+        error(file, idPrefix, `character.inventory[${idx}].itemId`, 'Missing or invalid itemId string.');
+      } else if (knownItems.size > 0 && !knownItems.has(item.itemId)) {
+        error(file, idPrefix, `character.inventory[${idx}].itemId`, `Item id "${item.itemId}" does not exist in items.json.`);
+      }
+      if (!item.name || typeof item.name !== 'string') {
+        error(file, idPrefix, `character.inventory[${idx}].name`, 'Missing or invalid name string.');
+      }
+      if (typeof item.quantity !== 'number' || !Number.isInteger(item.quantity) || item.quantity < 0) {
+        error(file, idPrefix, `character.inventory[${idx}].quantity`, 'Quantity must be a non-negative integer.');
+      }
+      if (!item.unit || typeof item.unit !== 'string') {
+        error(file, idPrefix, `character.inventory[${idx}].unit`, 'Missing or invalid unit string.');
+      }
+      if ('count' in item) {
+        error(file, idPrefix, `character.inventory[${idx}].count`, 'Forbidden legacy field "count": Standard field is "quantity".');
+      }
+    });
+  }
+
   if (Array.isArray(character.relationships)) {
     character.relationships.forEach((rel, idx) => {
       if (!rel.npcId) {

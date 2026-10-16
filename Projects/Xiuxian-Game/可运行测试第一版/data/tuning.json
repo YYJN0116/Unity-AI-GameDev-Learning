@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.2",
-  "note": "数值基线与机制规则配置。所有行动数值、疲劳消耗、产出参数与物价由此集中驱动。",
+  "note": "数值基线与机制规则配置。所有行动数值、疲劳消耗、产出参数与物价由此集中驱动。对齐10定稿§1.5物价基线与§5.1规范。",
   "fatigue": {
     "min": 0,
     "max": 100,
@@ -18,7 +18,12 @@
   "cultivation": {
     "min": 0,
     "max": 100,
-    "breakthroughEligibilityThreshold": 100
+    "breakthroughEligibilityThreshold": 100,
+    "statusBands": {
+      "initial": 0.3,
+      "marked": 0.8,
+      "near": 1.0
+    }
   },
   "time": {
     "minutesPerShichen": 120,
@@ -52,7 +57,7 @@
       "fatigueGain": 20,
       "herbDropItemId": "item.wild-herb",
       "herbDropQuantity": 1,
-      "stoneFindRange": [2, 5],
+      "stoneFindRange": [1, 2],
       "progressGainRange": [3, 7]
     },
     "combat": {
@@ -80,7 +85,7 @@
       "label": "任务",
       "fatigueGain": 25,
       "rewardCurrency": "lowGradeSpiritStone",
-      "rewardRange": [5, 9]
+      "rewardRange": [1, 2]
     },
     "trade": {
       "timeCostMinutes": 60,
@@ -88,7 +93,7 @@
       "fatigueGain": 6,
       "buyItemId": "item.qi-pill",
       "buyCostCurrency": "lowGradeSpiritStone",
-      "buyCostAmount": 6
+      "buyCostAmount": 2
     },
     "social": {
       "timeCostMinutes": 60,

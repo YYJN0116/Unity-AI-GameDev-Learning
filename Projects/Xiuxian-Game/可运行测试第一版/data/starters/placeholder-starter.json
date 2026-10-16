@@ -25,6 +25,13 @@
       "stage": null
     },
     "cultivationProgress": 10,
+    "progressInternal": 10,
+    "realmStability": "accumulating",
+    "progressBand": "initial",
+    "cultivationScale": {
+      "display": false,
+      "unit": null
+    },
     "spiritualPower": {
       "value": 10,
       "unit": "点",

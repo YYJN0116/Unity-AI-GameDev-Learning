@@ -27,7 +27,10 @@
   }
   const CHARACTER_PATCH_FIELDS = new Set([
     "name", "age", "background", "identity", "spiritualRoot", "constitution",
-    "realm", "cultivationProgress", "spiritualPower", "fatigue", "injuries",
+    "realm", "cultivationProgress", "progressInternal", "realmStability", "progressBand",
+    "cultivationScale", "spiritualPowerCap", "spiritualPowerControl", "soulLoad",
+    "techniqueMastery", "understanding",
+    "spiritualPower", "fatigue", "injuries",
     "inventory", "currencyBalances", "relationships", "reputation", "debts",
     "goals", "activeTasks"
   ]);
@@ -62,6 +65,10 @@
         spiritualRoot: "", constitution: "",
         realm: { name: "", level: null, stage: null },
         cultivationProgress: null,
+        progressInternal: null,
+        realmStability: "accumulating",
+        progressBand: "initial",
+        cultivationScale: { display: false, unit: null },
         spiritualPower: { value: null, unit: null, controlState: "" },
         fatigue: { value: null, scaleId: null, description: "" },
         injuries: [], inventory: [], currencyBalances: [], relationships: [],
@@ -103,6 +110,39 @@
     return realm.name + (realm.stage || "");
   }
 
+  function formatCultivationStatus(char) {
+    if (!char) return "积累中（初步）";
+    const stabilityLabels = {
+      unstable: "未稳固",
+      stable: "已稳固",
+      accumulating: "积累中",
+      ready: "条件齐备",
+      consolidating: "突破后待巩固"
+    };
+    const bandLabels = {
+      initial: "初步",
+      marked: "明显",
+      near: "接近"
+    };
+
+    if (char.realmStability) {
+      const stab = stabilityLabels[char.realmStability] || char.realmStability;
+      if (char.realmStability === "accumulating" && char.progressBand) {
+        const band = bandLabels[char.progressBand] || char.progressBand;
+        return `${stab}（${band}）`;
+      }
+      return stab;
+    }
+
+    const maxProgress = (TUNING.cultivation && TUNING.cultivation.max) || 100;
+    const curr = Number(char.cultivationProgress !== null && char.cultivationProgress !== undefined ? char.cultivationProgress : (char.progressInternal || 0));
+    const ratio = maxProgress > 0 ? (curr / maxProgress) : 0;
+    if (ratio >= 1) return "条件齐备（圆满）";
+    if (ratio >= 0.8) return "积累中（接近）";
+    if (ratio >= 0.3) return "积累中（明显）";
+    return "积累中（初步）";
+  }
+
   function formatClock(minutes) {
     if (!Number.isInteger(minutes) || minutes < 0 || minutes > 1439) return "时间未设定";
     return String(Math.floor(minutes / 60)).padStart(2, "0") + ":" +
@@ -120,8 +160,9 @@
     }).join("、") || "0 枚";
     const inventory = character.inventory || [];
     const relationships = character.relationships || [];
+    const maxCultivation = (TUNING.cultivation && TUNING.cultivation.max) || 100;
     const progressNum = character.cultivationProgress === null ? 0 : Number(character.cultivationProgress) || 0;
-    const progress = progressNum + "%";
+    const cultivationStatus = formatCultivationStatus(character);
     const powerVal = character.spiritualPower && character.spiritualPower.value !== null ? character.spiritualPower.value : 0;
     const fatigueVal = character.fatigue && character.fatigue.value !== null ? character.fatigue.value : 0;
     const realmText = formatRealm(character.realm);
@@ -146,7 +187,7 @@
     mainInfo.append(nameEl, identEl);
     headerCard.append(avatar, mainInfo);
 
-    // 2. 境界与修仙进度
+    // 2. 境界与修仙进度（按设定集 26 与 10 定稿 Q-A：面向玩家展示状态文字，不出现百分比与虚假精确数值）
     const realmBox = document.createElement("div");
     realmBox.className = "char-realm-box";
     const realmRow = document.createElement("div");
@@ -154,15 +195,15 @@
     const rName = document.createElement("span");
     rName.className = "realm-name";
     rName.textContent = realmText;
-    const rPerc = document.createElement("span");
-    rPerc.className = "realm-percentage";
-    rPerc.textContent = progress;
-    realmRow.append(rName, rPerc);
+    const rStatus = document.createElement("span");
+    rStatus.className = "realm-status-badge";
+    rStatus.textContent = cultivationStatus;
+    realmRow.append(rName, rStatus);
     const track = document.createElement("div");
     track.className = "progress-track";
     const fill = document.createElement("div");
     fill.className = "progress-fill";
-    fill.style.width = Math.min(100, Math.max(0, progressNum)) + "%";
+    fill.style.width = Math.min(100, Math.max(0, (progressNum / maxCultivation) * 100)) + "%";
     track.appendChild(fill);
     realmBox.append(realmRow, track);
 
@@ -274,7 +315,7 @@
       inventory.forEach((item) => {
         const chip = document.createElement("span");
         chip.className = "inv-chip";
-        const def = itemsMap[item.itemId || item.id] || {};
+        const def = itemsMap[item.itemId] || {};
         const name = item.name || def.name || "物品";
         const unit = item.unit || def.unit || "件";
         chip.textContent = `${name} ×${item.quantity || 1} ${unit}`;
@@ -707,12 +748,14 @@
 
   function generateLocalSimulation(actionId, actionLabel, choice, currentState) {
     const char = currentState.character || {};
-    const currProgress = Number(char.cultivationProgress) || 0;
+    const currProgress = Number(char.cultivationProgress !== null && char.cultivationProgress !== undefined ? char.cultivationProgress : (char.progressInternal || 0));
     const currFatigue = (char.fatigue && Number(char.fatigue.value)) || 0;
     const currLvl = (char.realm && Number(char.realm.level)) || 1;
     const currPower = (char.spiritualPower && Number(char.spiritualPower.value)) || 10;
     const currentLoc = currentState.gameWorld.location || "【灵气汇聚之地】";
     const maxFatigue = (TUNING.fatigue && TUNING.fatigue.max) || 100;
+    const maxCultivation = (TUNING.cultivation && TUNING.cultivation.max) || 100;
+    const breakthroughThreshold = (TUNING.cultivation && (TUNING.cultivation.breakthroughEligibilityThreshold || TUNING.cultivation.max)) || 100;
     const textLib = (DATA.text && DATA.text.actions) || {};
     const obsLib = (DATA.text && DATA.text.observations) || {};
     const sugLib = (DATA.text && DATA.text.nextActionSuggestions) || {};
@@ -733,25 +776,37 @@
         timeCostMinutes = actCfg.timeCostMinutes || 120;
         const [minG, maxG] = actCfg.progressGainRange || [6, 11];
         const gain = Math.floor(nextRandom() * (maxG - minG + 1)) + minG;
-        const newProgress = Math.min(100, currProgress + gain);
+        const newProgress = Math.min(maxCultivation, currProgress + gain);
         const fatigueGain = actCfg.fatigueGain || 12;
         const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
         const fatDesc = getFatigueDescription(newFatigue);
 
-        if (newProgress >= 100) {
-          narration = formatTemplate(textLib.cultivate && textLib.cultivate.full, { location: currentLoc, gain });
+        if (newProgress >= breakthroughThreshold) {
+          narration = formatTemplate(textLib.cultivate && textLib.cultivate.full, { location: currentLoc });
           observations.push(obsLib.cultivate_full || "经脉内灵力充盈至极，隐隐触碰到境界壁障。");
           nextActions = clone(sugLib.cultivate_full || ["尝试突破境界", "调整心境调息"]);
         } else {
-          narration = formatTemplate(textLib.cultivate && textLib.cultivate.progress, { location: currentLoc, gain });
+          narration = formatTemplate(textLib.cultivate && textLib.cultivate.progress, { location: currentLoc });
           observations.push(obsLib.cultivate_progress || "周天吐纳顺畅，心无杂念。");
           nextActions = clone(sugLib.cultivate || ["继续闭关修炼", "前往周边探索"]);
         }
+
+        const prevCultStatus = formatCultivationStatus(char);
+        const nextCultStatus = formatCultivationStatus({ ...char, cultivationProgress: newProgress });
         resourceChanges.push(
-          { label: "修为进度", before: `${currProgress}%`, change: `+${gain}%`, after: `${newProgress}%`, reason: "打坐运转心法" },
+          { label: "修为积累", before: prevCultStatus, change: "有所精进", after: nextCultStatus, reason: "打坐运转心法" },
           { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "运功心神消耗" }
         );
         charPatch.cultivationProgress = newProgress;
+        charPatch.progressInternal = newProgress;
+        const ratio = maxCultivation > 0 ? (newProgress / maxCultivation) : 0;
+        if (ratio >= 1) {
+          charPatch.realmStability = "ready";
+          charPatch.progressBand = null;
+        } else {
+          charPatch.realmStability = "accumulating";
+          charPatch.progressBand = ratio >= 0.8 ? "near" : ratio >= 0.3 ? "marked" : "initial";
+        }
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: fatDesc };
         break;
       }
@@ -768,9 +823,9 @@
           const itemDef = getItemDef(itemId);
           const qty = actCfg.herbDropQuantity || 1;
           const inv = clone(char.inventory || []);
-          const existing = inv.find((item) => item.itemId === itemId || item.id === itemId || item.name === itemDef.name);
-          if (existing) existing.quantity = (existing.quantity || 1) + qty;
-          else inv.push({ id: itemDef.id, itemId: itemDef.id, name: itemDef.name, quantity: qty, unit: itemDef.unit });
+          const existing = inv.find((item) => item.itemId === itemId);
+          if (existing) existing.quantity = (existing.quantity || 0) + qty;
+          else inv.push({ itemId: itemDef.id, name: itemDef.name, quantity: qty, unit: itemDef.unit });
 
           narration = formatTemplate(textLib.explore && textLib.explore.herb, { location: currentLoc, itemName: itemDef.name });
           observations.push(formatTemplate(obsLib.explore_herb || "采摘到一株{itemName}。", { itemName: itemDef.name }));
@@ -780,7 +835,7 @@
           );
           charPatch.inventory = inv;
         } else if (roll === 1) {
-          const [sMin, sMax] = actCfg.stoneFindRange || [2, 5];
+          const [sMin, sMax] = actCfg.stoneFindRange || [1, 2];
           const found = Math.floor(nextRandom() * (sMax - sMin + 1)) + sMin;
           const currencyUnit = "lowGradeSpiritStone";
           const currencyDef = getCurrencyDef(currencyUnit);
@@ -807,14 +862,25 @@
         } else if (roll === 2) {
           const [pMin, pMax] = actCfg.progressGainRange || [3, 7];
           const gain = Math.floor(nextRandom() * (pMax - pMin + 1)) + pMin;
-          const newProgress = Math.min(100, currProgress + gain);
-          narration = formatTemplate(textLib.explore && textLib.explore.insight, { location: currentLoc, gain });
+          const newProgress = Math.min(maxCultivation, currProgress + gain);
+          narration = formatTemplate(textLib.explore && textLib.explore.insight, { location: currentLoc });
           observations.push(obsLib.explore_insight || "观自然之象，灵台一片明澈。");
+          const prevCultStatus = formatCultivationStatus(char);
+          const nextCultStatus = formatCultivationStatus({ ...char, cultivationProgress: newProgress });
           resourceChanges.push(
-            { label: "修为进度", before: `${currProgress}%`, change: `+${gain}%`, after: `${newProgress}%`, reason: "观悟自然" },
+            { label: "修为积累", before: prevCultStatus, change: "感悟暗长", after: nextCultStatus, reason: "观悟自然" },
             { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "行路探索" }
           );
           charPatch.cultivationProgress = newProgress;
+          charPatch.progressInternal = newProgress;
+          const ratio = maxCultivation > 0 ? (newProgress / maxCultivation) : 0;
+          if (ratio >= 1) {
+            charPatch.realmStability = "ready";
+            charPatch.progressBand = null;
+          } else {
+            charPatch.realmStability = "accumulating";
+            charPatch.progressBand = ratio >= 0.8 ? "near" : ratio >= 0.3 ? "marked" : "initial";
+          }
         } else {
           narration = formatTemplate(textLib.explore && textLib.explore.scenery, { location: currentLoc });
           observations.push(obsLib.explore_scenery || "四周灵机稳定，未见明显异动。");
@@ -833,23 +899,34 @@
         const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
         const [pMin, pMax] = actCfg.progressGainRange || [4, 8];
         const gain = Math.floor(nextRandom() * (pMax - pMin + 1)) + pMin;
-        const newProgress = Math.min(100, currProgress + gain);
+        const newProgress = Math.min(maxCultivation, currProgress + gain);
         const lootId = actCfg.lootItemId || "item.beast-material";
         const lootDef = getItemDef(lootId);
         const lootQty = actCfg.lootQuantity || 1;
         const inv = clone(char.inventory || []);
-        const existing = inv.find((item) => item.itemId === lootId || item.id === lootId || item.name === lootDef.name);
-        if (existing) existing.quantity = (existing.quantity || 1) + lootQty;
-        else inv.push({ id: lootDef.id, itemId: lootDef.id, name: lootDef.name, quantity: lootQty, unit: lootDef.unit });
+        const existing = inv.find((item) => item.itemId === lootId);
+        if (existing) existing.quantity = (existing.quantity || 0) + lootQty;
+        else inv.push({ itemId: lootDef.id, name: lootDef.name, quantity: lootQty, unit: lootDef.unit });
 
         narration = formatTemplate(textLib.combat && textLib.combat.win, { location: currentLoc, loot: lootDef.name });
         observations.push(obsLib.combat_win || "实战令术法反应更为敏锐。");
+        const prevCultStatus = formatCultivationStatus(char);
+        const nextCultStatus = formatCultivationStatus({ ...char, cultivationProgress: newProgress });
         resourceChanges.push(
-          { label: "修为进度", before: `${currProgress}%`, change: `+${gain}%`, after: `${newProgress}%`, reason: "实战切磋磨砺" },
+          { label: "修为积累", before: prevCultStatus, change: "实战精进", after: nextCultStatus, reason: "实战切磋磨砺" },
           { label: "物品", before: "原背包", change: `+${lootDef.name}×${lootQty}${lootDef.unit}`, after: "已收录", reason: "战利品缴获" },
           { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "激烈搏斗" }
         );
         charPatch.cultivationProgress = newProgress;
+        charPatch.progressInternal = newProgress;
+        const ratio = maxCultivation > 0 ? (newProgress / maxCultivation) : 0;
+        if (ratio >= 1) {
+          charPatch.realmStability = "ready";
+          charPatch.progressBand = null;
+        } else {
+          charPatch.realmStability = "accumulating";
+          charPatch.progressBand = ratio >= 0.8 ? "near" : ratio >= 0.3 ? "marked" : "initial";
+        }
         charPatch.inventory = inv;
         charPatch.fatigue = { value: newFatigue, scaleId: "0-100", description: getFatigueDescription(newFatigue) };
         nextActions = clone(sugLib.combat || ["打坐运功调息", "前往市集交易"]);
@@ -858,9 +935,8 @@
       case "breakthrough": {
         const actCfg = (TUNING.actions && TUNING.actions.breakthrough) || {};
         timeCostMinutes = actCfg.timeCostMinutes || 240;
-        const threshold = (TUNING.cultivation && TUNING.cultivation.breakthroughEligibilityThreshold) || 100;
 
-        if (currProgress >= threshold) {
+        if (currProgress >= breakthroughThreshold) {
           if (currLvl < 9) {
             const nextLvl = currLvl + 1;
             const powerGain = actCfg.powerGainPerLevel || 15;
@@ -868,13 +944,16 @@
             const succFatigue = actCfg.successFatigue || 10;
             charPatch.realm = { name: "炼气", level: nextLvl, stage: null };
             charPatch.cultivationProgress = 0;
+            charPatch.progressInternal = 0;
+            charPatch.realmStability = "consolidating";
+            charPatch.progressBand = null;
             charPatch.spiritualPower = { value: newPower, unit: "缕", controlState: "运转如意" };
             charPatch.fatigue = { value: succFatigue, scaleId: "0-100", description: "破关神爽" };
             narration = formatTemplate(textLib.breakthrough && textLib.breakthrough.success, { nextLvl });
             observations.push(formatTemplate(obsLib.breakthrough_success || "成功突破至炼气{nextLvl}层，灵力上限提升。", { nextLvl }));
             resourceChanges.push(
               { label: "境界", before: `炼气${currLvl}层`, change: "+1层", after: `炼气${nextLvl}层`, reason: "突破成功" },
-              { label: "修为进度", before: "100%", change: "重置", after: "0%", reason: "开启新层次积淀" },
+              { label: "修为积累", before: "条件齐备", change: "重置巩固", after: "突破后待巩固", reason: "开启新层次积淀" },
               { label: "灵力上限", before: `${currPower}缕`, change: `+${newPower - currPower}`, after: `${newPower}缕`, reason: "丹田扩张" }
             );
             nextActions = clone(sugLib.breakthrough_success || ["稳固新境界修为", "习练新阶段术法"]);
@@ -887,8 +966,8 @@
           actionOutcome = "partial";
           const fatigueGain = actCfg.failFatigueGain || 15;
           const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
-          narration = formatTemplate(textLib.breakthrough && textLib.breakthrough.fail, { currProgress });
-          observations.push(obsLib.breakthrough_fail || "底蕴尚浅，需修为达 100% 后再行冲关。");
+          narration = formatTemplate(textLib.breakthrough && textLib.breakthrough.fail, {});
+          observations.push(obsLib.breakthrough_fail || "底蕴尚浅，需修为积累充盈圆满后再行冲关。");
           resourceChanges.push(
             { label: "精力疲劳", before: String(currFatigue), change: `+${fatigueGain}`, after: String(newFatigue), reason: "强行冲关被震荡" }
           );
@@ -917,7 +996,7 @@
         timeCostMinutes = actCfg.timeCostMinutes || 180;
         const fatigueGain = actCfg.fatigueGain || 25;
         const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
-        const [rMin, rMax] = actCfg.rewardRange || [5, 9];
+        const [rMin, rMax] = actCfg.rewardRange || [1, 2];
         const reward = Math.floor(nextRandom() * (rMax - rMin + 1)) + rMin;
         const currencyUnit = actCfg.rewardCurrency || "lowGradeSpiritStone";
         const currencyDef = getCurrencyDef(currencyUnit);
@@ -944,7 +1023,7 @@
         const fatigueGain = actCfg.fatigueGain || 6;
         const newFatigue = Math.min(maxFatigue, currFatigue + fatigueGain);
         const costCurrency = actCfg.buyCostCurrency || "lowGradeSpiritStone";
-        const costAmount = actCfg.buyCostAmount !== undefined ? actCfg.buyCostAmount : 6;
+        const costAmount = actCfg.buyCostAmount !== undefined ? actCfg.buyCostAmount : 2;
         const currencyDef = getCurrencyDef(costCurrency);
         const buyItemId = actCfg.buyItemId || "item.qi-pill";
         const buyItemDef = getItemDef(buyItemId);
@@ -955,9 +1034,9 @@
         if (stones >= costAmount) {
           stoneItem.amount -= costAmount;
           const inv = clone(char.inventory || []);
-          const existing = inv.find((item) => item.itemId === buyItemId || item.id === buyItemId || item.name === buyItemDef.name);
-          if (existing) existing.quantity = (existing.quantity || 1) + 1;
-          else inv.push({ id: buyItemDef.id, itemId: buyItemDef.id, name: buyItemDef.name, quantity: 1, unit: buyItemDef.unit });
+          const existing = inv.find((item) => item.itemId === buyItemId);
+          if (existing) existing.quantity = (existing.quantity || 0) + 1;
+          else inv.push({ itemId: buyItemDef.id, name: buyItemDef.name, quantity: 1, unit: buyItemDef.unit });
 
           narration = formatTemplate(textLib.trade && textLib.trade.buy, {
             cost: costAmount,
@@ -1246,6 +1325,26 @@
       }
     });
 
+    // 运行时校验 inventory 条目形状 (5.2 / N6)
+    char.inventory.forEach((item, idx) => {
+      if (!item || typeof item !== "object") throw new Error("inventory[" + idx + "] 必须为对象。");
+      if (typeof item.itemId !== "string" || !item.itemId) {
+        throw new Error("inventory[" + idx + "].itemId 缺失或不是字符串。");
+      }
+      if (typeof item.name !== "string" || !item.name) {
+        throw new Error("inventory[" + idx + "].name 缺失或不是字符串。");
+      }
+      if (typeof item.quantity !== "number" || !Number.isInteger(item.quantity) || item.quantity < 0) {
+        throw new Error("inventory[" + idx + "].quantity 必须为非负整数。");
+      }
+      if (typeof item.unit !== "string" || !item.unit) {
+        throw new Error("inventory[" + idx + "].unit 缺失或不是字符串。");
+      }
+      if (item.count !== undefined) {
+        throw new Error("inventory[" + idx + "] 严禁包含已废弃的 count 字段（必须使用 quantity）。");
+      }
+    });
+
     const date = candidate.updatedAt.inGameDate;
     const minute = candidate.updatedAt.timeOfDayMinutes;
     if (date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1275,6 +1374,20 @@
           values.currencyBalances.forEach((cur, idx) => {
             if (cur && cur.currency !== undefined) {
               throw new Error("statePatch.character.currencyBalances[" + idx + "] 严禁包含已废弃的 currency 字段。");
+            }
+          });
+        }
+        if (Array.isArray(values.inventory)) {
+          values.inventory.forEach((item, idx) => {
+            if (!item || typeof item !== "object") throw new Error("statePatch.character.inventory[" + idx + "] 必须为对象。");
+            if (typeof item.itemId !== "string" || !item.itemId) {
+              throw new Error("statePatch.character.inventory[" + idx + "].itemId 缺失或不是字符串。");
+            }
+            if (typeof item.quantity !== "number" || !Number.isInteger(item.quantity) || item.quantity < 0) {
+              throw new Error("statePatch.character.inventory[" + idx + "].quantity 必须为非负整数。");
+            }
+            if (item.count !== undefined) {
+              throw new Error("statePatch.character.inventory[" + idx + "] 严禁包含已废弃的 count 字段。");
             }
           });
         }
